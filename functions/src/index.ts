@@ -75,7 +75,7 @@ app.get("/auth/spotify/callback", async (req, res) => {
         headers: { authorization: `Bearer ${accessToken.token.access_token}` },
       })
     ).data;
-    res.send(profile);
+    res.send(`<script>window.close()</script>`);
   } catch (e) {
     res.status(500).send(`Fetching Spotify access token failed: ${e.message}`);
   }
