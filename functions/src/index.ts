@@ -5,6 +5,7 @@ import * as express from "express";
 import * as crypto from "crypto";
 import * as oauth2lib from "simple-oauth2";
 import * as cookieParser from "cookie-parser";
+import * as axios from "axios";
 
 const app = express();
 app.use(cors);
@@ -50,8 +51,7 @@ app.get("/auth/spotify/redirect", (req, res) => {
   );
 });
 
-app.get("/auth/spotify/callback", (req, res) => {
-  console.log(req.cookies);
+app.get("/auth/spotify/callback", async (req, res) => {
   // Check that we received a State Cookie.
   if (!req.cookies || !req.cookies.state) {
     return res
@@ -65,15 +65,19 @@ app.get("/auth/spotify/callback", (req, res) => {
   }
 
   // Exchange the auth code for an access token.
-  console.log(`${req.protocol}://${req.get("host")}/spotify-callback`);
-  oauth2
-    .getToken({
-      code: req.query.code,
-      redirect_uri: `http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app/auth/spotify/callback`,
-    })
-    .then((results: unknown) => {
-      console.log(results);
-      res.send(results);
-    });
+  const accessToken = await oauth2.getToken({
+    code: req.query.code,
+    redirect_uri: `http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app/auth/spotify/callback`,
+  });
+  try {
+    const profile = (
+      await axios.get("https://api.spotify.com/v1/me", {
+        headers: { authorization: `Bearer ${accessToken.token.access_token}` },
+      })
+    ).data;
+    res.send(profile);
+  } catch (e) {
+    res.status(500).send(`Fetching Spotify access token failed: ${e.message}`);
+  }
 });
 exports.app = functions.https.onRequest(app);
