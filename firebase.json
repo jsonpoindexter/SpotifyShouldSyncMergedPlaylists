@@ -19,8 +19,17 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/index.html"
+        "destination": "/index.html",
+        "function": "app"
       }
     ]
+  },
+  "emulators": {
+    "functions": {
+      "port": "5001"
+    },
+    "hosting": {
+      "port": "5000"
+    }
   }
 }
