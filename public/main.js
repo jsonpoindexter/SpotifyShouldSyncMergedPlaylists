@@ -18,35 +18,19 @@ function Main() {
           );
         }
       };
-      const loadEl = document.querySelector("#load");
-      try {
-        let app = firebase.app();
-        let features = [
-          "auth",
-          "database",
-          "firestore",
-          "functions",
-          "messaging",
-          "storage",
-          "analytics",
-          "remoteConfig",
-          "performance",
-        ].filter((feature) => typeof app[feature] === "function");
-        firebase.auth().onAuthStateChanged(this.onAuthStateChanged.bind(this));
-        loadEl.textContent = `Firebase SDK loaded with ${features.join(", ")}`;
-      } catch (e) {
-        console.error(e);
-        loadEl.textContent =
-          "Error loading the Firebase SDK, check the console.";
-      }
+      // Load firebase
+      firebase.auth().onAuthStateChanged(this.onAuthStateChanged.bind(this));
+
+      // Handlers
       this.signInButton = document.getElementById("sign-in-button");
       this.signOutButton = document.getElementById("sign-out-button");
       this.nameContainer = document.getElementById("name-container");
       this.uidContainer = document.getElementById("uid-container");
       this.profilePic = document.getElementById("profile-pic");
+      this.loadingCard = document.getElementById("loading-card");
       this.signedOutCard = document.getElementById("signed-out-card");
       this.signedInCard = document.getElementById("signed-in-card");
-
+      // Event binding
       this.signInButton.addEventListener("click", this.onSignInButtonClick);
       this.signOutButton.addEventListener("click", this.onSignOutButtonClick);
     }.bind(this)
@@ -55,6 +39,7 @@ function Main() {
   Main.prototype.onAuthStateChanged = function (user) {
     // Skip token refresh.
     if (user && user.uid === this.lastUid) return;
+    this.loadingCard.style.display = "none";
     if (user) {
       this.lastUid = user.uid;
       this.nameContainer.innerText = user.displayName;

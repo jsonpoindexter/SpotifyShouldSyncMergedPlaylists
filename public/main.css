@@ -1,0 +1,46 @@
+
+html, body {
+    font-family: 'Roboto', 'Helvetica', sans-serif;
+}
+.mdl-grid {
+    max-width: 1024px;
+    margin: auto;
+}
+.mdl-card {
+    min-height: 0;
+    margin-bottom: 10px;
+    width: 640px;
+}
+.mdl-layout__header-row {
+    padding: 0;
+}
+h3 {
+    background: url('//www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_96dp.png') no-repeat;
+    background-size: 40px;
+    padding-left: 50px;
+}
+#signed-out-card,
+#signed-in-card {
+    display: none;
+}
+#profile-pic {
+    height: 60px;
+    width: 60px;
+    border-radius: 30px;
+    margin-left: 10px;
+    margin-top: 10px;
+}
+#name-container,
+#uid-container {
+    font-weight: bold;
+}
+#delete-button {
+    margin-left: 20px;
+}
+#pics-container:HOVER  {
+    background-color: black;
+}
+#pics-container img:HOVER {
+    cursor: pointer;
+    opacity: 0.5;
+}

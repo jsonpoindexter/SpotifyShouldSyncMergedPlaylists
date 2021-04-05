@@ -1,24 +1,24 @@
 "use strict";
 import * as functions from "firebase-functions";
+import * as express from "express";
+import * as cookieParser from "cookie-parser";
+import * as admin from "firebase-admin";
+import * as serviceAccount from "./service-account.json";
+import * as corsModule from "cors";
 
-const BASE_URL = // @ts-ignore
+// Controllers
+import * as spotifyAuthController from "./controllers/spotifyAuth";
+import { validateFirebaseIdToken } from "./utils/firebase";
+
+export const BASE_URL = // @ts-ignore
   process.env.FUNCTIONS_EMULATOR === true
     ? "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app"
     : "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app";
 
 console.log(`BASE_URL: ${BASE_URL}`);
-import * as corsModule from "cors";
-const cors = corsModule({ origin: true });
-import * as express from "express";
-import * as crypto from "crypto";
-import * as oauth2lib from "simple-oauth2";
-import * as cookieParser from "cookie-parser";
-import axios from "axios";
-import { Profile } from "./types/spotify";
-// import * as config from "./config.json";
 
-import * as admin from "firebase-admin";
-import * as serviceAccount from "./service-account.json";
+const cors = corsModule({ origin: true });
+
 admin.initializeApp({
   credential: admin.credential.cert({
     projectId: serviceAccount.project_id,
@@ -31,138 +31,8 @@ admin.initializeApp({
 const app = express();
 app.use(cors);
 app.use(cookieParser());
-
-const credentials = {
-  client: {
-    id: functions.config().spotify.client_id,
-    secret: functions.config().spotify.client_secret,
-  },
-  auth: {
-    tokenHost: "https://accounts.spotify.com",
-    tokenPath: "/api/token",
-  },
-};
-const oauth2 = new oauth2lib.AuthorizationCode(credentials);
-
-app.get("/auth/spotify/redirect", (req, res) => {
-  // Generate a random state verification cookie.
-  const state =
-    (req.cookies && req.cookies.state) ||
-    crypto.randomBytes(20).toString("hex");
-  // Allow unsecure cookies on localhost.
-  const secureCookie = req.get("host")!.indexOf("localhost:") !== 0;
-  console.log(`req.get("host")!: ${req.get("host")!}`);
-  console.log("state", state);
-  res.cookie("state", state.toString(), {
-    maxAge: 3600000,
-    secure: secureCookie,
-    httpOnly: true,
-  });
-  const scopes = "user-read-private user-read-email";
-  res.redirect(
-    "https://accounts.spotify.com/authorize" +
-      "?response_type=code" +
-      `&state=${state}` +
-      "&client_id=" +
-      functions.config().spotify.client_id +
-      (scopes ? "&scope=" + encodeURIComponent(scopes) : "") +
-      "&redirect_uri=" +
-      encodeURIComponent(`${BASE_URL}/auth/spotify/callback`)
-  );
-});
-
-// Exchange the auth code for an access token.
-async function createFirebaseAccount(
-  userId: string,
-  name: string,
-  photoUrl: string,
-  accessToken: string
-) {
-  // The uid we'll assign to the user.
-  const uid = `spotify:${userId}`;
-  const databaseTask = admin
-    .database()
-    .ref(`/spotifyAccessToken/${uid}`)
-    .set(accessToken);
-  // Create the custom token.
-  // Create or update the user account.
-  const userCreationTask = admin
-    .auth()
-    .updateUser(uid, {
-      displayName: name,
-      photoURL: photoUrl,
-    })
-    .catch((error) => {
-      // If user does not exists we create it.
-      if (error.code === "auth/user-not-found") {
-        return admin.auth().createUser({
-          uid: uid,
-          displayName: name,
-          photoURL: photoUrl,
-        });
-      }
-      throw error;
-    });
-
-  // Wait for all async task to complete then generate and return a custom auth token.
-  await Promise.all([userCreationTask, databaseTask]);
-  // Create a Firebase custom auth token.
-  const token = await admin.auth().createCustomToken(uid);
-  console.log('Created Custom token for UID "', uid, '" Token:', token);
-  return token;
-}
-
-app.get("/auth/spotify/callback", async (req, res) => {
-  console.log("/auth/spotify/callback");
-  // Check that we received a State Cookie.
-  if (!req.cookies || !req.cookies.state) {
-    res
-      .status(400)
-      .send(
-        "State cookie not set or expired. Maybe you took too long to authorize. Please try again."
-      );
-    // Check the State Cookie is equal to the state parameter.
-  } else if (req.cookies.state !== req.query.state) {
-    res.status(400).send("State validation failed");
-  }
-  console.log(`Requesting access token via oauth`);
-  const accessToken = await oauth2.getToken({
-    code: req.query.code as string,
-    redirect_uri: `${BASE_URL}/auth/spotify/callback`,
-  });
-  console.log(`AccessToken: ${JSON.stringify(accessToken)}`);
-  try {
-    const profile = (
-      await axios.get<Profile>("https://api.spotify.com/v1/me", {
-        headers: { authorization: `Bearer ${accessToken.token.access_token}` },
-      })
-    ).data;
-    console.log(`Profile: ${JSON.stringify(profile)}`);
-    const userId = profile.id;
-    const name = profile.display_name;
-    const photoUrl = profile.images[0].url;
-    const firebaseToken = await createFirebaseAccount(
-      userId,
-      name,
-      photoUrl,
-      accessToken.token.access_token
-    );
-    // Serve an HTML page that signs the user in and updates the user profile.
-    res.send(signInFirebaseTemplate(firebaseToken));
-  } catch (e) {
-    res.status(500).send(`Fetching Spotify access token failed: ${e.message}`);
-  }
-});
-/**
- * Generates the HTML template that signs the user in Firebase using the given token and closes the
- * popup.
- */
-function signInFirebaseTemplate(token: string) {
-  return `
-    <script>
-       window.opener.postMessage('${token}', '*')
-       window.close()
-    </script>`;
-}
+app.use(validateFirebaseIdToken);
+app.get("/auth/spotify/redirect", spotifyAuthController.getRedirect);
+app.get("/auth/spotify/callback", spotifyAuthController.getCallback);
 
 exports.app = functions.https.onRequest(app);
