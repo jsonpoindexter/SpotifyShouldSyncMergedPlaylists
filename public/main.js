@@ -82,14 +82,17 @@ function Main() {
         // Populate playlist unordered list
         const playlistItem = document.createElement("li");
         playlistItem.setAttribute("class", "list-group-item");
-        // const playlistImg = document.createElement("img");
-        // playlistImg.classList.add("playlist-avatar");
-        // playlistImg.src = playlist.images[0].url;
-        // const playlistName = document.createElement("span");
-        playlistItem.innerText = playlist.name;
+        const playlistImg = document.createElement("img");
+        playlistImg.classList.add("playlist-avatar");
+        playlistImg.src = playlist.images[0].url;
+        const playlistName = document.createElement("span");
+        playlistName.classList.add("playlist-name");
+        playlistName.innerText = playlist.name;
+        playlistItem.append(playlistImg, playlistName);
         playlistItem.addEventListener("click", () => {
           playlistItem.classList.toggle("active");
         });
+
         this.sourcePlaylistList.append(playlistItem);
       });
   };

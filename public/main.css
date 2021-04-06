@@ -38,10 +38,15 @@ h3 {
 #delete-button {
     margin-left: 20px;
 }
+.list-group {
+    user-select: none;
+}
 .playlist-avatar {
     height: 60px;
     width: 60px;
     border-radius: 30px;
-    margin-left: 10px;
-    margin-top: 10px;
+    margin: 10px;
+}
+.playlist-name {
+    font-weight: bold;
 }
