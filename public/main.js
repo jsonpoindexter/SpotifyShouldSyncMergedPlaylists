@@ -36,7 +36,7 @@ function Main() {
     }.bind(this)
   );
 
-  Main.prototype.onAuthStateChanged = function (user) {
+  Main.prototype.onAuthStateChanged = async function (user) {
     // Skip token refresh.
     if (user && user.uid === this.lastUid) return;
     this.loadingCard.style.display = "none";
@@ -47,9 +47,12 @@ function Main() {
       this.profilePic.src = user.photoURL;
       this.signedOutCard.style.display = "none";
       this.signedInCard.style.display = "block";
-      this.spotifyTokenRef = firebase
-        .database()
-        .ref("/spotifyAccessToken/" + user.uid);
+      const token = await firebase.auth().currentUser.getIdToken();
+      const response = await fetch(`${baseUrl}/spotify/playlists`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
     } else {
       this.lastUid = null;
       this.signedOutCard.style.display = "block";

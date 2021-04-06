@@ -5,10 +5,11 @@ import * as cookieParser from "cookie-parser";
 import * as admin from "firebase-admin";
 import * as serviceAccount from "./service-account.json";
 import * as corsModule from "cors";
+import { validateFirebaseIdToken } from "./utils/firebase";
 
 // Controllers
 import * as spotifyAuthController from "./controllers/spotifyAuth";
-import { validateFirebaseIdToken } from "./utils/firebase";
+import * as spotifyPlaylistController from "./controllers/spotifyPlaylists";
 
 export const BASE_URL = // @ts-ignore
   process.env.FUNCTIONS_EMULATOR === true
@@ -31,8 +32,13 @@ admin.initializeApp({
 const app = express();
 app.use(cors);
 app.use(cookieParser());
-app.use(validateFirebaseIdToken);
+app.get("/", (req, res) => res.send());
 app.get("/auth/spotify/redirect", spotifyAuthController.getRedirect);
 app.get("/auth/spotify/callback", spotifyAuthController.getCallback);
+app.get(
+  "/spotify/playlists",
+  validateFirebaseIdToken,
+  spotifyPlaylistController.getAllPlaylists
+);
 
 exports.app = functions.https.onRequest(app);

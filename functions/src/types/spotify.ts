@@ -22,3 +22,41 @@ export interface Profile {
   type: string;
   uri: string;
 }
+
+export interface PlaylistResponse {
+  href: string;
+  items: Playlist[];
+  limit: number;
+  next?: string;
+  offset: number;
+  previous?: string;
+  total: number;
+}
+
+export interface Playlist {
+  collaborative: false;
+  external_urls: {
+    spotify: string;
+  };
+  href: string;
+  id: string;
+  images: [];
+  name: string;
+  owner: {
+    external_urls: {
+      spotify: string;
+    };
+    href: string;
+    id: string;
+    type: string;
+    uri: string;
+  };
+  public: boolean;
+  snapshot_id: string;
+  tracks: {
+    href: string;
+    total: number;
+  };
+  type: string;
+  uri: string;
+}
