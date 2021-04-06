@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Welcome to Firebase Hosting</title>
+
+    <!-- Bootstrap CSS-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
 
     <!-- Material Design Lite -->
     <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
@@ -32,6 +37,18 @@
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 </head>
 <body>
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
 <div class="layout mdl-layout mdl-js-layout mdl-layout--fixed-header">
     <!-- Header section containing title -->
     <header class="mdl-layout__header mdl-color-text--white mdl-color--light-blue-700">
@@ -84,23 +101,7 @@
                     <h2 class="mdl-card__title-text mdl-color-text--white">Your Spotify Playlists</h2>
                 </div>
                 <div class="mdl-card__supporting-text mdl-color-text--grey-600"></div>
-                <table id="source-playlist-table"
-                       class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp"
-                       style="display: none">
-                    <thead>
-                    <tr>
-                        <th class="mdl-data-table__cell--non-numeric">Name</th>
-                    </tr>
-                    </thead>
-                    <tbody id="playlist-list">
-<!--                        <tr>-->
-<!--                            <td class="mdl-data-table__cell&#45;&#45;non-numeric"></td>-->
-<!--                        </tr>-->
-                    </tbody>
-                </table>
-                <!--                    <ul id="source-playlist-list" class="mdl-list"></ul>-->
-
-
+                <ul id="source-playlist-list" class="list-group"></ul>
             </div>
 
         </div>
