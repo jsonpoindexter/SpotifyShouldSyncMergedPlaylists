@@ -70,3 +70,4 @@ node_modules/
 /functions/.runtimeconfig.json
 /functions/env.json
 /functions/src/config.json
+/public/bootstrap-5.0.0-beta3-dist/

@@ -1,19 +1,18 @@
 "use strict";
-function Main() {
-  this.useLocal = // Use local storage to get playlists
-    new URLSearchParams(window.location.search).get("useLocal") === "true";
-  this.playlists = this.useLocal
-    ? JSON.parse(localStorage.getItem("playlists")) || []
-    : []; // User's playlists
-  this.selectPlaylists = []; // User's selected source playlists
-  const baseUrl =
-    window.location.hostname === "localhost" || "127.0.0.1"
-      ? "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app"
-      : "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app";
-  console.log(baseUrl);
-  document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+class Main {
+  constructor() {
+    this.useLocal = // Use local storage to get playlists
+      new URLSearchParams(window.location.search).get("useLocal") === "true";
+    this.playlists = this.useLocal
+      ? JSON.parse(localStorage.getItem("playlists")) || []
+      : []; // User's playlists
+    this.selectPlaylists = []; // User's selected source playlists
+    this.baseUrl =
+      window.location.hostname === "localhost" || "127.0.0.1"
+        ? "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app"
+        : "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app";
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log(this);
       // Handle customToken returned from auth window closing
       window.onmessage = function (e) {
         if (e.data) {
@@ -29,10 +28,13 @@ function Main() {
 
       // Handlers
       this.signInButton = document.getElementById("sign-in-button");
-      this.signOutButton = document.getElementById("sign-out-button");
+      this.signOutButton = document.getElementById("navbar-sign-out-button");
       this.nameContainer = document.getElementById("name-container");
       this.uidContainer = document.getElementById("uid-container");
-      this.profilePic = document.getElementById("profile-pic");
+      this.navbarProfileWrapper = document.getElementById(
+        "navbar-profile-wrapper"
+      );
+      this.profilePic = document.getElementById("navbar-profile-pic");
       this.loadingCard = document.getElementById("loading-card");
       this.signedOutCard = document.getElementById("signed-out-card");
       this.signedInCard = document.getElementById("signed-in-card");
@@ -41,20 +43,28 @@ function Main() {
         "source-playlist-table"
       );
       // Event binding
-      this.signInButton.addEventListener("click", this.onSignInButtonClick);
-      this.signOutButton.addEventListener("click", this.onSignOutButtonClick);
-    }.bind(this)
-  );
+      this.signInButton.addEventListener(
+        "click",
+        this.onSignInButtonClick.bind(this)
+      );
+      this.signOutButton.addEventListener(
+        "click",
+        this.onSignOutButtonClick.bind(this)
+      );
+    });
+  }
 
-  Main.prototype.onAuthStateChanged = async function (user) {
+  async onAuthStateChanged(user) {
+    console.log(this);
     // Skip token refresh.
     if (user && user.uid === this.lastUid) return;
     this.loadingCard.style.display = "none";
     if (user) {
       this.lastUid = user.uid;
-      this.nameContainer.innerText = user.displayName;
-      this.uidContainer.innerText = user.uid;
+      // this.nameContainer.innerText = user.displayName;
+      // this.uidContainer.innerText = user.uid;
       this.profilePic.src = user.photoURL;
+      this.navbarProfileWrapper.style.display = "block";
       this.signedOutCard.style.display = "none";
       this.signedInCard.style.display = "block";
       await this.fetchPlaylists();
@@ -63,14 +73,14 @@ function Main() {
       this.signedOutCard.style.display = "block";
       this.signedInCard.style.display = "none";
     }
-  };
+  }
 
-  Main.prototype.fetchPlaylists = async function () {
+  async fetchPlaylists() {
     // If using local and no playlists then try and fetch
     // If not using local then fetch
     if (!this.useLocal || (this.useLocal && !this.playlists.length)) {
       const token = await firebase.auth().currentUser.getIdToken();
-      const response = await fetch(`${baseUrl}/spotify/playlists`, {
+      const response = await fetch(`${this.baseUrl}/spotify/playlists`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -109,26 +119,29 @@ function Main() {
         });
         this.sourcePlaylistList.append(playlistItem);
       });
-  };
+  }
 
-  Main.prototype.onSignInButtonClick = function () {
+  onSignInButtonClick() {
     // Open the Auth flow as a popup.
     window.open(
-      `${baseUrl}/auth/spotify/redirect`,
+      `${this.baseUrl}/auth/spotify/redirect`,
       "firebaseAuth",
       "height=auto,width=auto"
     );
-  };
-  Main.prototype.onSignOutButtonClick = function () {
+  }
+  onSignOutButtonClick() {
     firebase.auth().signOut();
-  };
-  Main.prototype.onSourcePlaylistSelect = function (id, active) {
+    this.navbarProfileWrapper.style.display = "none";
+    console.log(this.profilePic);
+    this.profilePic.src = "";
+  }
+  onSourcePlaylistSelect(id, active) {
     active
       ? this.selectPlaylists.push(id)
       : (this.selectPlaylists = this.selectPlaylists.filter(
           (playlistId) => playlistId !== id
         ));
-  };
+  }
 }
 
 new Main();
