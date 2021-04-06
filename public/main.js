@@ -31,6 +31,9 @@ function Main() {
       this.signedOutCard = document.getElementById("signed-out-card");
       this.signedInCard = document.getElementById("signed-in-card");
       this.sourcePlaylistList = document.getElementById("source-playlist-list");
+      this.sourcePlaylistTable = document.getElementById(
+        "source-playlist-table"
+      );
       // Event binding
       this.signInButton.addEventListener("click", this.onSignInButtonClick);
       this.signOutButton.addEventListener("click", this.onSignOutButtonClick);
@@ -64,6 +67,14 @@ function Main() {
       },
     });
     const playlists = await response.json();
+    const thread = document.createElement("thead");
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.innerText = "Name";
+    th.classList.add("mdl-data-table__cell--non-numeric");
+    tr.appendChild(th);
+    thread.appendChild(tr);
+    const tbody = document.createElement("tbody");
     playlists
       .sort((a, b) => {
         if (a.name < b.name) {
@@ -75,18 +86,32 @@ function Main() {
         return 0;
       })
       .forEach((playlist) => {
-        // Create platylist list items
-        const playlistItem = document.createElement("li");
-        playlistItem.classList.add("mdl-list__item");
-        const playlistImg = document.createElement("img");
-        playlistImg.classList.add("playlist-avatar");
-        playlistImg.src = playlist.images[0].url;
-        const playlistName = document.createElement("span");
-        playlistName.classList.add("mdl-list__item-primary-content");
-        playlistName.innerText = playlist.name;
-        playlistItem.replaceChildren(playlistImg, playlistName);
-        this.sourcePlaylistList.append(playlistItem);
+        // Populate playlist table
+        const tbodyTr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.classList.add("mdl-data-table__cell--non-numeric");
+        td.innerText = playlist.name;
+        componentHandler.upgradeElement(td);
+        tbodyTr.append(td);
+        componentHandler.upgradeElement(tbodyTr);
+        tbody.append(tbodyTr);
+
+        // Populate playlist unordered list
+        // const playlistItem = document.createElement("li");
+        // playlistItem.classList.add("mdl-list__item");
+        // const playlistImg = document.createElement("img");
+        // playlistImg.classList.add("playlist-avatar");
+        // playlistImg.src = playlist.images[0].url;
+        // const playlistName = document.createElement("span");
+        // playlistName.classList.add("mdl-list__item-primary-content");
+        // playlistName.innerText = playlist.name;
+        // playlistItem.replaceChildren(playlistImg, playlistName);
+        // this.sourcePlaylistList.append(playlistItem);
       });
+    componentHandler.upgradeElement(tbody);
+    componentHandler.upgradeElement(thread);
+    this.sourcePlaylistTable.append(thread, tbody);
+    componentHandler.upgradeElement(this.sourcePlaylistTable);
   };
 
   Main.prototype.onSignInButtonClick = function () {
