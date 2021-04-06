@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { BASE_URL } from "../index";
 import * as oauth2lib from "simple-oauth2";
 import * as functions from "firebase-functions";
-import crypto from "crypto";
+import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 
 const credentials = {

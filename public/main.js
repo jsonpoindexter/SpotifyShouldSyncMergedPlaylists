@@ -30,6 +30,7 @@ function Main() {
       this.loadingCard = document.getElementById("loading-card");
       this.signedOutCard = document.getElementById("signed-out-card");
       this.signedInCard = document.getElementById("signed-in-card");
+      this.sourcePlaylistList = document.getElementById("source-playlist-list");
       // Event binding
       this.signInButton.addEventListener("click", this.onSignInButtonClick);
       this.signOutButton.addEventListener("click", this.onSignOutButtonClick);
@@ -47,18 +48,47 @@ function Main() {
       this.profilePic.src = user.photoURL;
       this.signedOutCard.style.display = "none";
       this.signedInCard.style.display = "block";
-      const token = await firebase.auth().currentUser.getIdToken();
-      const response = await fetch(`${baseUrl}/spotify/playlists`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await this.fetchPlaylists();
     } else {
       this.lastUid = null;
       this.signedOutCard.style.display = "block";
       this.signedInCard.style.display = "none";
     }
   };
+
+  Main.prototype.fetchPlaylists = async function () {
+    const token = await firebase.auth().currentUser.getIdToken();
+    const response = await fetch(`${baseUrl}/spotify/playlists`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const playlists = await response.json();
+    playlists
+      .sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        }
+        if (a.name > b.name) {
+          return 1;
+        }
+        return 0;
+      })
+      .forEach((playlist) => {
+        // Create platylist list items
+        const playlistItem = document.createElement("li");
+        playlistItem.classList.add("mdl-list__item");
+        const playlistImg = document.createElement("img");
+        playlistImg.classList.add("playlist-avatar");
+        playlistImg.src = playlist.images[0].url;
+        const playlistName = document.createElement("span");
+        playlistName.classList.add("mdl-list__item-primary-content");
+        playlistName.innerText = playlist.name;
+        playlistItem.replaceChildren(playlistImg, playlistName);
+        this.sourcePlaylistList.append(playlistItem);
+      });
+  };
+
   Main.prototype.onSignInButtonClick = function () {
     // Open the Auth flow as a popup.
     window.open(
@@ -71,4 +101,5 @@ function Main() {
     firebase.auth().signOut();
   };
 }
+
 new Main();

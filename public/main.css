@@ -30,6 +30,7 @@ h3 {
     margin-left: 10px;
     margin-top: 10px;
 }
+
 #name-container,
 #uid-container {
     font-weight: bold;
@@ -37,10 +38,10 @@ h3 {
 #delete-button {
     margin-left: 20px;
 }
-#pics-container:HOVER  {
-    background-color: black;
-}
-#pics-container img:HOVER {
-    cursor: pointer;
-    opacity: 0.5;
+.playlist-avatar {
+    height: 60px;
+    width: 60px;
+    border-radius: 30px;
+    margin-left: 10px;
+    margin-top: 10px;
 }
