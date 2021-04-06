@@ -1,6 +1,11 @@
 "use strict";
-
 function Main() {
+  this.useLocal = // Use local storage to get playlists
+    new URLSearchParams(window.location.search).get("useLocal") === "true";
+  this.playlists = this.useLocal
+    ? JSON.parse(localStorage.getItem("playlists")) || []
+    : []; // User's playlists
+  this.selectPlaylists = []; // User's selected source playlists
   const baseUrl =
     window.location.hostname === "localhost" || "127.0.0.1"
       ? "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app"
@@ -61,14 +66,20 @@ function Main() {
   };
 
   Main.prototype.fetchPlaylists = async function () {
-    const token = await firebase.auth().currentUser.getIdToken();
-    const response = await fetch(`${baseUrl}/spotify/playlists`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const playlists = await response.json();
-    playlists
+    // If using local and no playlists then try and fetch
+    // If not using local then fetch
+    if (!this.useLocal || (this.useLocal && !this.playlists.length)) {
+      const token = await firebase.auth().currentUser.getIdToken();
+      const response = await fetch(`${baseUrl}/spotify/playlists`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      this.playlists = await response.json();
+      if (this.useLocal)
+        localStorage.setItem("playlists", JSON.stringify(this.playlists));
+    }
+    this.playlists
       .sort((a, b) => {
         if (a.name < b.name) {
           return -1;
@@ -82,6 +93,7 @@ function Main() {
         // Populate playlist unordered list
         const playlistItem = document.createElement("li");
         playlistItem.setAttribute("class", "list-group-item");
+        playlistItem.setAttribute("id", playlist.id);
         const playlistImg = document.createElement("img");
         playlistImg.classList.add("playlist-avatar");
         playlistImg.src = playlist.images[0].url;
@@ -91,8 +103,10 @@ function Main() {
         playlistItem.append(playlistImg, playlistName);
         playlistItem.addEventListener("click", () => {
           playlistItem.classList.toggle("active");
+          if (playlistItem.classList.contains("active"))
+            this.onSourcePlaylistSelect(playlistItem.id, true);
+          else this.onSourcePlaylistSelect(playlistItem.id, false);
         });
-
         this.sourcePlaylistList.append(playlistItem);
       });
   };
@@ -102,11 +116,18 @@ function Main() {
     window.open(
       `${baseUrl}/auth/spotify/redirect`,
       "firebaseAuth",
-      "height=315,width=400"
+      "height=auto,width=auto"
     );
   };
   Main.prototype.onSignOutButtonClick = function () {
     firebase.auth().signOut();
+  };
+  Main.prototype.onSourcePlaylistSelect = function (id, active) {
+    active
+      ? this.selectPlaylists.push(id)
+      : (this.selectPlaylists = this.selectPlaylists.filter(
+          (playlistId) => playlistId !== id
+        ));
   };
 }
 
