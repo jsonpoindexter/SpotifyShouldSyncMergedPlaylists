@@ -64,4 +64,9 @@ node_modules/
 
 # dotenv environment variables file
 .env
-/.idea/prettier.xml
+/.idea
+/functions/lib
+/functions/src/service-account.json
+/functions/.runtimeconfig.json
+/functions/env.json
+/functions/src/config.json
