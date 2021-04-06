@@ -53,7 +53,10 @@
                         This web application demonstrates how you can Sign In a Firebase app with Spotify.<br><br>
                         After sign-in you combine spotify playlists and keep them synced!<br><br>
                     </p>
-                    <button id="sign-in-button" class="mdl-color-text--grey-700 mdl-button--raised mdl-button mdl-js-button mdl-js-ripple-effect"><i class="material-icons">account_circle</i> Sign in with Spotify</button>
+                    <button id="sign-in-button"
+                            class="mdl-color-text--grey-700 mdl-button--raised mdl-button mdl-js-button mdl-js-ripple-effect">
+                        <i class="material-icons">account_circle</i> Sign in with Spotify
+                    </button>
                 </div>
             </div>
         </div>
@@ -66,8 +69,14 @@
                         Your Firebase User ID is: <span id="uid-container"></span><br>
                         Your profile picture: <img id="profile-pic">
                     </p>
-                    <button id="sign-out-button" class="mdl-color-text--grey-700 mdl-button--raised mdl-button mdl-js-button mdl-js-ripple-effect">Sign out</button>
-                    <button id="delete-button" class="mdl-color-text--grey-700 mdl-button--raised mdl-button mdl-js-button mdl-js-ripple-effect">Delete account</button>
+                    <button id="sign-out-button"
+                            class="mdl-color-text--grey-700 mdl-button--raised mdl-button mdl-js-button mdl-js-ripple-effect">
+                        Sign out
+                    </button>
+                    <button id="delete-button"
+                            class="mdl-color-text--grey-700 mdl-button--raised mdl-button mdl-js-button mdl-js-ripple-effect">
+                        Delete account
+                    </button>
                 </div>
             </div>
             <div class="mdl-card mdl-shadow--2dp mdl-cell--12-col">
@@ -75,11 +84,21 @@
                     <h2 class="mdl-card__title-text mdl-color-text--white">Your Spotify Playlists</h2>
                 </div>
                 <div class="mdl-card__supporting-text mdl-color-text--grey-600"></div>
-                    <table id="source-playlist-table" class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp">
-                        <thead></thead>
-                        <tbody></tbody>
-                    </table>
-<!--                    <ul id="source-playlist-list" class="mdl-list"></ul>-->
+                <table id="source-playlist-table"
+                       class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp"
+                       style="display: none">
+                    <thead>
+                    <tr>
+                        <th class="mdl-data-table__cell--non-numeric">Name</th>
+                    </tr>
+                    </thead>
+                    <tbody id="playlist-list">
+<!--                        <tr>-->
+<!--                            <td class="mdl-data-table__cell&#45;&#45;non-numeric"></td>-->
+<!--                        </tr>-->
+                    </tbody>
+                </table>
+                <!--                    <ul id="source-playlist-list" class="mdl-list"></ul>-->
 
 
             </div>

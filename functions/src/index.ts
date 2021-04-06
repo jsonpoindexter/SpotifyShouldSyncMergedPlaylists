@@ -13,8 +13,8 @@ import * as spotifyPlaylistController from './controllers/spotifyPlaylists'
 
 export const BASE_URL =
   process.env.FUNCTIONS_EMULATOR === 'true'
-    ? 'https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app'
-    : 'http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app'
+    ? 'http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app'
+    : 'https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app'
 
 console.log(`BASE_URL: ${BASE_URL}`)
 

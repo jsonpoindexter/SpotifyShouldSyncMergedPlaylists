@@ -2,9 +2,10 @@
 
 function Main() {
   const baseUrl =
-    window.location.hostname === "localhost"
+    window.location.hostname === "localhost" || "127.0.0.1"
       ? "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app"
       : "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app";
+  console.log(baseUrl);
   document.addEventListener(
     "DOMContentLoaded",
     function () {
@@ -67,14 +68,14 @@ function Main() {
       },
     });
     const playlists = await response.json();
-    const thread = document.createElement("thead");
-    const tr = document.createElement("tr");
-    const th = document.createElement("th");
-    th.innerText = "Name";
-    th.classList.add("mdl-data-table__cell--non-numeric");
-    tr.appendChild(th);
-    thread.appendChild(tr);
-    const tbody = document.createElement("tbody");
+    // const thread = document.createElement("thead");
+    // const tr = document.createElement("tr");
+    // const th = document.createElement("th");
+    // th.innerText = "Name";
+    // th.classList.add("mdl-data-table__cell--non-numeric");
+    // tr.appendChild(th);
+    // thread.appendChild(tr);
+    const tbody = document.getElementById("playlist-list");
     playlists
       .sort((a, b) => {
         if (a.name < b.name) {
@@ -86,15 +87,45 @@ function Main() {
         return 0;
       })
       .forEach((playlist) => {
-        // Populate playlist table
+        //<tr>
+        //  <td>
+        //      <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-data-table__select" for="row[1]">
+        //          <input class="mdl-checkbox__input" id="row[1]" type="checkbox">
+        //      </label>
+        //  </td>
+        // <td class="mdl-data-table__cell--non-numeric">Ronald Macdonald</td>
+        //</tr>
+
+        // <tr>
         const tbodyTr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.classList.add("mdl-data-table__cell--non-numeric");
-        td.innerText = playlist.name;
-        componentHandler.upgradeElement(td);
-        tbodyTr.append(td);
+        // <td> for checkbox
+        const tdCheckBox = document.createElement("td");
+        tdCheckBox.classList.add("mdl-data-table__cell--non-numeric");
+        // <label>
+        const label = document.createElement("label");
+        label.setAttribute(
+          "class",
+          "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-data-table__select"
+        );
+        // <input>
+        const input = document.createElement("input");
+        input.setAttribute("class", "mdl-checkbox__input");
+        input.setAttribute("type", "checkbox");
+        label.appendChild(input);
+        tdCheckBox.appendChild(label);
+
+        const tdName = document.createElement("td");
+        tdName.setAttribute("class", "mdl-data-table__cell--non-numeric");
+        tdName.innerText = playlist.name;
+
+        tbodyTr.append(tdCheckBox, tdName);
+
+        componentHandler.upgradeElement(input);
+        componentHandler.upgradeElement(label);
+        componentHandler.upgradeElement(tdCheckBox);
+        componentHandler.upgradeElement(tdName);
         componentHandler.upgradeElement(tbodyTr);
-        tbody.append(tbodyTr);
+        tbody.appendChild(tbodyTr);
 
         // Populate playlist unordered list
         // const playlistItem = document.createElement("li");
@@ -108,10 +139,8 @@ function Main() {
         // playlistItem.replaceChildren(playlistImg, playlistName);
         // this.sourcePlaylistList.append(playlistItem);
       });
-    componentHandler.upgradeElement(tbody);
-    componentHandler.upgradeElement(thread);
-    this.sourcePlaylistTable.append(thread, tbody);
-    componentHandler.upgradeElement(this.sourcePlaylistTable);
+    this.sourcePlaylistTable.appendChild(tbody);
+    this.sourcePlaylistTable.style.display = "block";
   };
 
   Main.prototype.onSignInButtonClick = function () {
