@@ -31,8 +31,6 @@ class Main {
       // Handlers
       this.signInButton = document.getElementById("sign-in-button");
       this.signOutButton = document.getElementById("navbar-sign-out-button");
-      this.nameContainer = document.getElementById("name-container");
-      this.uidContainer = document.getElementById("uid-container");
       this.destinationPlaylistName = document.getElementById(
         "destination-playlist-name"
       );
@@ -42,13 +40,9 @@ class Main {
       this.destinationPlaylistCounter = document.getElementById(
         "destination-playlist-counter"
       );
-      this.desintationPlaylistSubmit = document.getElementById(
-        "destination-playlist-submit"
-      );
       this.navbarProfileWrapper = document.getElementById(
         "navbar-profile-wrapper"
       );
-
       this.profilePic = document.getElementById("navbar-profile-pic");
       this.loadingCard = document.getElementById("loading-card");
       this.signedOutCard = document.getElementById("signed-out-card");
@@ -128,6 +122,10 @@ class Main {
       if (this.useLocal)
         localStorage.setItem("playlists", JSON.stringify(this.playlists));
     }
+    this.createSourcePlaylistTable();
+  }
+
+  createSourcePlaylistTable() {
     this.playlists
       .sort((a, b) => {
         if (a.name < b.name) {

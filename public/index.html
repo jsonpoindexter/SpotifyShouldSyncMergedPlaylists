@@ -15,7 +15,6 @@
     <script defer src="/__/firebase/8.3.2/firebase-app.js"></script>
     <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/8.3.2/firebase-auth.js"></script>
-    <script defer src="/__/firebase/8.3.2/firebase-database.js"></script>
     <!--    <script defer src="/__/firebase/8.3.2/firebase-firestore.js"></script>-->
     <!--    <script defer src="/__/firebase/8.3.2/firebase-functions.js"></script>-->
     <!--    <script defer src="/__/firebase/8.3.2/firebase-messaging.js"></script>-->
@@ -57,6 +56,7 @@
             </p>
             <button id="sign-in-button"
                     class="btn btn-outline-success text-success fw-bolder">
+                <!-- TODO: shrink spotify logo its sooo damn big  -->
                 Sign in with <img
                     src="images/spotify-icons-logos/logos/01_RGB/02_PNG/Spotify_Logo_RGB_Green.png"
                     height="50px" alt="Spotify Logo">
@@ -65,15 +65,18 @@
         <div id="signed-in-card" class="container-fluid">
             <div class="d-flex h-75 d-flex">
                 <div id="source-playlist-list" class="col-5 list-group overflow-auto"></div>
-                <form id="destination-playlist-form" class="col form-group text-secondary needs-validation align-self-center p-4" novalidate>
-                    <input minlength="1" maxlength="100" id="destination-playlist-name" type="text" class="form-control bg-transparent text-secondary"
+                <form id="destination-playlist-form"
+                      class="col form-group text-secondary needs-validation align-self-center p-4" novalidate>
+                    <input minlength="1" maxlength="100" id="destination-playlist-name" type="text"
+                           class="form-control bg-transparent text-secondary"
                            placeholder="Combined Playlist Name" required>
                     <div class="invalid-feedback">
-                       Playlist name must at least 1 and no longer than 100 characters in length
+                        Playlist name must at least 1 and no longer than 100 characters in length
                     </div>
                     <div id="destination-playlist-counter" class="text-end">0/100</div>
                     <div class="">
-                        <button id="destination-playlist-submit" class="btn btn-primary" type="submit">Create Playlist</button>
+                        <button id="destination-playlist-submit" class="btn btn-primary" type="submit">Create Playlist
+                        </button>
                     </div>
                 </form>
             </div>
