@@ -39,9 +39,6 @@ class Main {
       this.signedOutCard = document.getElementById("signed-out-card");
       this.signedInCard = document.getElementById("signed-in-card");
       this.sourcePlaylistList = document.getElementById("source-playlist-list");
-      this.sourcePlaylistTable = document.getElementById(
-        "source-playlist-table"
-      );
       // Event binding
       this.signInButton.addEventListener(
         "click",
@@ -132,8 +129,13 @@ class Main {
   onSignOutButtonClick() {
     firebase.auth().signOut();
     this.navbarProfileWrapper.style.display = "none";
-    console.log(this.profilePic);
     this.profilePic.src = "";
+    this.playlists = [];
+    this.selectPlaylists = [];
+    // Remove all playlist item from sourcePlaylist List
+    while (this.sourcePlaylistList.firstChild) {
+      this.sourcePlaylistList.firstChild.remove();
+    }
   }
   onSourcePlaylistSelect(id, active) {
     active
