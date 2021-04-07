@@ -84,13 +84,14 @@ class Main {
               `${this.baseUrl}/spotify/playlists/combine`,
               {
                 body: JSON.stringify({
-                  playlists: this.selectPlaylists,
+                  playlistsIds: this.selectPlaylists,
                   name: this.destinationPlaylistName.value,
                   description: this.destinationPlaylisDescription.value,
                 }),
                 method: "POST",
                 headers: {
                   Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
                 },
               }
             );

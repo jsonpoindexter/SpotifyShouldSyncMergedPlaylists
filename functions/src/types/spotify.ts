@@ -23,7 +23,7 @@ export interface Profile {
   uri: string
 }
 
-export interface PlaylistResponse {
+export interface PlaylistsResponse {
   href: string
   items: Playlist[]
   limit: number

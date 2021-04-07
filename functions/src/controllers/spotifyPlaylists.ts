@@ -1,28 +1,7 @@
-import axios, { AxiosInstance } from 'axios'
 import { Request, Response } from 'express'
-import * as admin from 'firebase-admin'
-import { Playlist, PlaylistResponse } from '../types/spotify'
-
-const getSpotifyPlaylistRecursive = async (
-  client: AxiosInstance,
-  url: string,
-  limit: number,
-): Promise<Playlist[]> => {
-  const data = (
-    await client.get<PlaylistResponse>(url, {
-      params: {
-        limit,
-      },
-    })
-  ).data
-  if (data.next) {
-    return [
-      ...data.items,
-      ...(await getSpotifyPlaylistRecursive(client, data.next, limit)),
-    ]
-  }
-  return data.items
-}
+import { Playlist } from '../types/spotify'
+import { validationResult } from 'express-validator'
+import { SpotifyClient } from '../utils/spotifyClient'
 
 export const getAllPlaylists = async (
   req: Request,
@@ -30,19 +9,8 @@ export const getAllPlaylists = async (
 ): Promise<void> => {
   const { user } = req
   try {
-    // Get access token from database
-    const spotifyToken = (
-      await admin.database().ref(`/spotifyAccessToken/${user.uid}`).get()
-    ).val()
-
-    const client = axios.create({
-      headers: {
-        authorization: `Bearer ${spotifyToken}`,
-      },
-    })
-    const playlists: Playlist[] = await getSpotifyPlaylistRecursive(
-      client,
-      'https://api.spotify.com/v1/me/playlists',
+    const spotifyClient = await new SpotifyClient(user.uid)
+    const playlists: Playlist[] = await spotifyClient.getSpotifyPlaylistsRecursive(
       50,
     )
     res.send(playlists)
@@ -51,3 +19,42 @@ export const getAllPlaylists = async (
     res.status(500).send(e.message)
   }
 }
+
+interface CombinePlaylistRequestBody {
+  name: string
+  playlistsIds: string[]
+  description?: string
+}
+
+/** Combine user requested playlists into one
+ *
+ * @param req
+ * @param res
+ */
+export const postCombinePlaylists = async (
+  req: Request<unknown, CombinePlaylistRequestBody>,
+  res: Response,
+): Promise<Response> => {
+  const errors = validationResult(req as Request)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() })
+  }
+  // const { name, playlistsIds, description } = req.body
+
+  // Fetch songs in playlistIds
+  // Create destination plyalist w/ name, descriotion and songs from playlistIds
+  // Add new destinationPlaylistId, and sourcePlaylistIds to DB so schedular can use to sync
+  // Respond with new playlist id or playlist obj
+
+  return res.send()
+}
+
+// /**
+//  * Sync songs from multiple sourcePlaylistIds into the destinationPlaylistId
+//  * @param sourcePlaylistIds
+//  * @param destinationPlaylistId
+//  */
+// const syncPlaylists = (
+//   sourcePlaylistIds: string[],
+//   destinationPlaylistId: string,
+// ) => {}

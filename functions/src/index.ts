@@ -6,6 +6,7 @@ import * as admin from 'firebase-admin'
 import * as serviceAccount from './service-account.json'
 import * as corsModule from 'cors'
 import { validateFirebaseIdToken } from './utils/firebase'
+import { checkSchema } from 'express-validator'
 
 // Controllers
 import * as spotifyAuthController from './controllers/spotifyAuth'
@@ -32,6 +33,7 @@ admin.initializeApp({
 const app = express()
 app.use(cors)
 app.use(cookieParser())
+app.use(express.json())
 app.get('/', (req, res) => res.send())
 app.get('/auth/spotify/redirect', spotifyAuthController.getRedirect)
 app.get('/auth/spotify/callback', spotifyAuthController.getCallback)
@@ -39,6 +41,30 @@ app.get(
   '/spotify/playlists',
   validateFirebaseIdToken,
   spotifyPlaylistController.getAllPlaylists,
+)
+app.post(
+  '/spotify/playlists/combine',
+  validateFirebaseIdToken,
+  checkSchema(
+    {
+      name: {
+        isString: true,
+        isLength: { options: { min: 0, max: 100 } },
+        notEmpty: true,
+      },
+      playlistsIds: {
+        isArray: { options: { min: 1, max: 10 } }, // TODO: enforce client side
+        notEmpty: true,
+      },
+      description: {
+        isString: true,
+        isLength: { options: { max: 300 } },
+        optional: true,
+      },
+    },
+    ['body'],
+  ),
+  spotifyPlaylistController.postCombinePlaylists,
 )
 
 exports.app = functions.https.onRequest(app)
