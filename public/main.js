@@ -1,6 +1,29 @@
 "use strict";
 const PLAYLIST_MAX_LENGTH = 100;
 
+// Example starter JavaScript for disabling form submissions if there are invalid fields
+(function () {
+  "use strict";
+
+  // Fetch all the forms we want to apply custom Bootstrap validation styles to
+  const forms = document.querySelectorAll(".needs-validation");
+
+  // Loop over them and prevent submission
+  Array.prototype.slice.call(forms).forEach(function (form) {
+    form.addEventListener(
+      "submit",
+      function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add("was-validated");
+      },
+      false
+    );
+  });
+})();
+
 class Main {
   constructor() {
     this.useLocal = // Use local storage to get playlists
@@ -36,9 +59,16 @@ class Main {
       this.destinationPlaylistName = document.getElementById(
         "destination-playlist-name"
       );
+      this.destinationPlaylistForm = document.getElementById(
+        "destination-playlist-form"
+      );
+      this.destinationPlaylistCounter = document.getElementById(
+        "destination-playlist-counter"
+      );
       this.navbarProfileWrapper = document.getElementById(
         "navbar-profile-wrapper"
       );
+
       this.profilePic = document.getElementById("navbar-profile-pic");
       this.loadingCard = document.getElementById("loading-card");
       this.signedOutCard = document.getElementById("signed-out-card");
@@ -152,13 +182,18 @@ class Main {
       : (this.selectPlaylists = this.selectPlaylists.filter(
           (playlistId) => playlistId !== id
         ));
-    console.log(this.selectPlaylists);
-    this.destinationPlaylistName.value = this.selectPlaylists
+    const newPlaylistName = this.selectPlaylists
       .map(
         (playlistId) =>
           this.playlists.find((playlist) => playlist.id === playlistId).name
       )
       .join(" + ");
+    // Update Combined Playlist name
+    if (newPlaylistName.length > PLAYLIST_MAX_LENGTH) return;
+    this.destinationPlaylistName.value = newPlaylistName;
+
+    // Update Combined Playlist Name char count
+    this.destinationPlaylistCounter.innerText = `${this.destinationPlaylistName.value.length}/${PLAYLIST_MAX_LENGTH}`;
   }
 }
 

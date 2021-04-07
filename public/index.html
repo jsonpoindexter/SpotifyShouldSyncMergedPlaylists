@@ -63,12 +63,19 @@
             </button>
         </div>
         <div id="signed-in-card" class="container-fluid">
-            <div class="row h-75">
-                <div id="source-playlist-list" class="col list-group"></div>
-                <div id="destination-playlist-name-wrapper" class="col form-group text-secondary d-flex">
-                    <input maxlength="100" id="destination-playlist-name" type="text" class="form-control bg-transparent text-secondary align-self-center"
-                           placeholder="Combined Playlist Name">
-                </div>
+            <div class="d-flex h-75 d-flex">
+                <div id="source-playlist-list" class="col list-group flex-shrink-1 overflow-auto"></div>
+                <form id="destination-playlist-form" class="col form-group text-secondary needs-validation align-self-center" novalidate>
+                    <input minlength="1" maxlength="100" id="destination-playlist-name" type="text" class="form-control bg-transparent text-secondary"
+                           placeholder="Combined Playlist Name" required>
+                    <div class="invalid-feedback">
+                       Playlist name must at least 1 and no longer than 100 characters in length
+                    </div>
+                    <div id="destination-playlist-counter">0/100</div>
+                    <div class="">
+                        <button class="btn btn-primary" type="submit">Create Playlist</button>
+                    </div>
+                </form>
             </div>
 
         </div>
