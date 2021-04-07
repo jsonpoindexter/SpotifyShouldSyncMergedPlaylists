@@ -122,6 +122,9 @@ class Main {
   }
 
   async fetchPlaylists() {
+    document
+      .getElementById("source-playlist-loading")
+      .classList.remove("d-none");
     // If using local and no playlists then try and fetch
     // If not using local then fetch
     if (!this.useLocal || (this.useLocal && !this.playlists.length)) {

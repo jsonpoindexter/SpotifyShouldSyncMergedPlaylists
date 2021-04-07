@@ -69,12 +69,14 @@
     <div id="signed-in-card" class="container-fluid">
         <div class="d-flex h-75">
             <!-- SOURCE PLAYLIST -->
-            <div id="source-playlist-list" class="col-5 list-group overflow-auto table-responsive h-100 bg-secondary">
+            <div class="col-5 list-group overflow-auto table-responsive h-100 bg-secondary">
                 <div id="source-playlist-loading" class="d-flex flex-column m-auto align-items-center">
                     <p>Loading Your Spotify Playlists</p>
                     <div class="row spinner-border " role="status"></div>
                 </div>
+                <div id="source-playlist-list" ></div>
             </div>
+
             <!-- DESTINATION PLAYLIST -->
             <form id="destination-playlist-form"
                   class="col form-group text-secondary needs-validation align-self-center p-4" novalidate>
