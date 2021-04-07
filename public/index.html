@@ -62,8 +62,15 @@
                     height="50px" alt="Spotify Logo">
             </button>
         </div>
-        <div id="signed-in-card" class="row">
-            <div id="source-playlist-list" class="list-group"></div>
+        <div id="signed-in-card" class="container-fluid">
+            <div class="row h-75">
+                <div id="source-playlist-list" class="col list-group"></div>
+                <div id="destination-playlist-name-wrapper" class="col form-group text-secondary d-flex">
+                    <input maxlength="100" id="destination-playlist-name" type="text" class="form-control bg-transparent text-secondary align-self-center"
+                           placeholder="Combined Playlist Name">
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

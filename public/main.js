@@ -1,4 +1,6 @@
 "use strict";
+const PLAYLIST_MAX_LENGTH = 100;
+
 class Main {
   constructor() {
     this.useLocal = // Use local storage to get playlists
@@ -31,6 +33,9 @@ class Main {
       this.signOutButton = document.getElementById("navbar-sign-out-button");
       this.nameContainer = document.getElementById("name-container");
       this.uidContainer = document.getElementById("uid-container");
+      this.destinationPlaylistName = document.getElementById(
+        "destination-playlist-name"
+      );
       this.navbarProfileWrapper = document.getElementById(
         "navbar-profile-wrapper"
       );
@@ -147,6 +152,13 @@ class Main {
       : (this.selectPlaylists = this.selectPlaylists.filter(
           (playlistId) => playlistId !== id
         ));
+    console.log(this.selectPlaylists);
+    this.destinationPlaylistName.value = this.selectPlaylists
+      .map(
+        (playlistId) =>
+          this.playlists.find((playlist) => playlist.id === playlistId).name
+      )
+      .join(" + ");
   }
 }
 
