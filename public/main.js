@@ -129,12 +129,18 @@ class Main {
     // If not using local then fetch
     if (!this.useLocal || (this.useLocal && !this.playlists.length)) {
       const token = await firebase.auth().currentUser.getIdToken();
+
       const response = await fetch(`${this.baseUrl}/spotify/playlists`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (response.status !== 200) {
+        this.onSignOutButtonClick();
+        return;
+      }
       this.playlists = await response.json();
+
       if (this.useLocal)
         localStorage.setItem("playlists", JSON.stringify(this.playlists));
     }
