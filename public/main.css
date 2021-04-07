@@ -31,6 +31,9 @@ h3 {
 #delete-button {
     margin-left: 20px;
 }
+.navbar {
+    /*border-bottom: 5px solid #198754;*/
+}
 .list-group {
     user-select: none;
 }

@@ -140,14 +140,14 @@ class Main {
         playlistItem.href = "#";
         playlistItem.setAttribute(
           "class",
-          "list-group-item list-group-item-action"
+          "list-group-item list-group-item-action list-group-item-dark"
         );
         playlistItem.setAttribute("id", playlist.id);
         const playlistImg = document.createElement("img");
         playlistImg.classList.add("playlist-avatar");
         playlistImg.src = playlist.images[0].url;
         const playlistName = document.createElement("span");
-        playlistName.classList.add("playlist-name");
+        playlistName.setAttribute("class", "playlist-name");
         playlistName.innerText = playlist.name;
         playlistItem.append(playlistImg, playlistName);
         playlistItem.addEventListener("click", () => {
