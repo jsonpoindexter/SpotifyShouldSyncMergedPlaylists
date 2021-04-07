@@ -1,32 +1,6 @@
 "use strict";
 const PLAYLIST_MAX_LENGTH = 100;
 
-// Example starter JavaScript for disabling form submissions if there are invalid fields
-// (function () {
-//   "use strict";
-//
-//   // Fetch all the forms we want to apply custom Bootstrap validation styles to
-//   const forms = document.querySelectorAll(".needs-validation");
-//
-//   // Loop over them and prevent submission
-//   Array.prototype.slice.call(forms).forEach(function (form) {
-//     form.addEventListener(
-//       "submit",
-//       function (event) {
-//
-//         event.preventDefault();
-//         if (!form.checkValidity()) {
-//
-//           event.stopPropagation();
-//         }
-//
-//         form.classList.add("was-validated");
-//       },
-//       false
-//     );
-//   });
-// })();
-
 class Main {
   constructor() {
     this.useLocal = // Use local storage to get playlists
@@ -36,7 +10,8 @@ class Main {
       : []; // User's playlists
     this.selectPlaylists = []; // User's selected source playlists
     this.baseUrl =
-      window.location.hostname === "localhost" || "127.0.0.1"
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
         ? "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app"
         : "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app";
     document.addEventListener("DOMContentLoaded", () => {
