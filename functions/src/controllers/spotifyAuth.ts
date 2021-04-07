@@ -75,7 +75,8 @@ export const getRedirect = (req: Request, res: Response): void => {
     secure: secureCookie,
     httpOnly: true,
   })
-  const scopes = 'user-read-private user-read-email'
+  const scopes =
+    'user-read-private user-read-email playlist-read-private playlist-read-collaborative'
   res.redirect(
     'https://accounts.spotify.com/authorize' +
       '?response_type=code' +
