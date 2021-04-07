@@ -44,10 +44,13 @@
             </div>
         </div>
     </nav>
+    <!-- MAIN -->
     <div class="d-flex justify-content-center mt-3">
+        <!-- LOADING USER STATE -->
         <div id="loading-card" class="row spinner-border text-success align-self-center" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
+        <!-- SIGNED OUT -->
         <div id="signed-out-card" class="row text-center">
             <!-- Card containing the sign-in UI -->
             <p class="text-secondary">
@@ -62,20 +65,38 @@
                     height="50px" alt="Spotify Logo">
             </button>
         </div>
+        <!-- SIGNED IN -->
         <div id="signed-in-card" class="container-fluid">
-            <div class="d-flex h-75 d-flex">
+            <div class="d-flex h-75 d-flex">\
+                <!-- SOURCE PLAYLIST -->
                 <div id="source-playlist-list" class="col-5 list-group overflow-auto"></div>
+                <!-- DESTINATION PLAYLIST -->
                 <form id="destination-playlist-form"
                       class="col form-group text-secondary needs-validation align-self-center p-4" novalidate>
-                    <input minlength="1" maxlength="100" id="destination-playlist-name" type="text"
-                           class="form-control bg-transparent text-secondary"
-                           placeholder="Combined Playlist Name" required>
+                    <!-- NAME   -->
+                    <label for="destination-playlist-name">Name</label>
+                    <input minlength="1"
+                           id="destination-playlist-name" type="text"
+                           class="form-control text-secondary"
+                           required>
                     <div class="invalid-feedback">
                         Playlist name must at least 1 and no longer than 100 characters in length
                     </div>
-                    <div id="destination-playlist-counter" class="text-end">0/100</div>
-                    <div class="">
-                        <button id="destination-playlist-submit" class="btn btn-primary" type="submit">Create Playlist
+                    <div id="destination-playlist-name-counter" class="text-end"></div>
+                    <!-- DESCRIPTION -->
+                    <div class="col">
+                        <label for="destination-playlist-description">Description</label>
+                        <textarea
+                                id="destination-playlist-description" class="form-control text-secondary"
+                                style="resize: none"
+                                rows="5">
+
+                        </textarea>
+                    </div>
+                    <div id="destination-playlist-description-counter" class="text-end"></div>
+
+                    <div class="mt-2 d-flex justify-content-end">
+                        <button id="destination-playlist-submit" class="btn btn-success" type="submit">Create Playlist
                         </button>
                     </div>
                 </form>

@@ -1,5 +1,6 @@
 "use strict";
-const PLAYLIST_MAX_LENGTH = 100;
+const PLAYLIST_NAME_MAX_LENGTH = 100;
+const PLAYLIST_DESCRIPTION_MAX_LENGTH = 300;
 
 class Main {
   constructor() {
@@ -31,15 +32,25 @@ class Main {
       // Handlers
       this.signInButton = document.getElementById("sign-in-button");
       this.signOutButton = document.getElementById("navbar-sign-out-button");
-      this.destinationPlaylistName = document.getElementById(
-        "destination-playlist-name"
-      );
       this.destinationPlaylistForm = document.getElementById(
         "destination-playlist-form"
       );
-      this.destinationPlaylistCounter = document.getElementById(
-        "destination-playlist-counter"
+      this.destinationPlaylistName = document.getElementById(
+        "destination-playlist-name"
       );
+      this.destinationPlaylistName.maxLength = PLAYLIST_NAME_MAX_LENGTH;
+      this.destinationPlaylistNameCounter = document.getElementById(
+        "destination-playlist-name-counter"
+      );
+      this.updateDestinationPlaylistNameCounter(0);
+      this.destinationPlaylisDescription = document.getElementById(
+        "destination-playlist-description"
+      );
+      this.destinationPlaylisDescription.maxLength = PLAYLIST_DESCRIPTION_MAX_LENGTH;
+      this.destinationPlaylistDescCounter = document.getElementById(
+        "destination-playlist-description-counter"
+      );
+      this.updateDestinationPlaylistDescCounter(0);
       this.navbarProfileWrapper = document.getElementById(
         "navbar-profile-wrapper"
       );
@@ -58,30 +69,32 @@ class Main {
         this.onSignOutButtonClick.bind(this)
       );
       this.destinationPlaylistName.addEventListener("input", (event) =>
-        this.updateDestinationPlaylistCounter(event.target.value.length)
+        this.updateDestinationPlaylistNameCounter(event.target.value.length)
       );
       this.destinationPlaylistForm.addEventListener(
         "submit",
         async (event) => {
           event.preventDefault();
+          this.destinationPlaylistForm.classList.add("was-validated");
           if (!this.destinationPlaylistForm.checkValidity()) {
             event.stopPropagation();
+          } else {
+            const token = await firebase.auth().currentUser.getIdToken();
+            const response = await fetch(
+              `${this.baseUrl}/spotify/playlists/combine`,
+              {
+                body: JSON.stringify({
+                  playlists: this.selectPlaylists,
+                  name: this.destinationPlaylistName.value,
+                  description: this.destinationPlaylisDescription.value,
+                }),
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
           }
-          this.destinationPlaylistForm.classList.add("was-validated");
-          const token = await firebase.auth().currentUser.getIdToken();
-          const response = await fetch(
-            `${this.baseUrl}/spotify/playlists/combine`,
-            {
-              body: JSON.stringify({
-                playlists: this.selectPlaylists,
-                name: this.destinationPlaylistName.value,
-              }),
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
         },
         false
       );
@@ -170,6 +183,7 @@ class Main {
       "height=auto,width=auto"
     );
   }
+
   onSignOutButtonClick() {
     firebase.auth().signOut();
     this.navbarProfileWrapper.style.display = "none";
@@ -180,30 +194,38 @@ class Main {
     while (this.sourcePlaylistList.firstChild) {
       this.sourcePlaylistList.firstChild.remove();
     }
+    this.destinationPlaylistName.value = "";
+    this.destinationPlaylisDescription.value = "";
+    this.updateDestinationPlaylistNameCounter(0);
+    this.updateDestinationPlaylistDescCounter(0);
   }
   onSourcePlaylistSelect(id, active) {
+    // Add / Remove selected playlist from selectedPlaylists
     active
       ? this.selectPlaylists.push(id)
       : (this.selectPlaylists = this.selectPlaylists.filter(
           (playlistId) => playlistId !== id
         ));
-    const newPlaylistName = this.selectPlaylists
+    const playlistDescription = this.selectPlaylists
       .map(
         (playlistId) =>
           this.playlists.find((playlist) => playlist.id === playlistId).name
       )
       .join(" + ");
-    // Update Combined Playlist name
-    if (newPlaylistName.length > PLAYLIST_MAX_LENGTH) return;
-    this.destinationPlaylistName.value = newPlaylistName;
+    // Update Combined Playlist Description
+    if (playlistDescription.length > PLAYLIST_DESCRIPTION_MAX_LENGTH) return;
+    this.destinationPlaylisDescription.value = playlistDescription;
 
-    // Update Combined Playlist Name char count
-    this.updateDestinationPlaylistCounter(
-      this.destinationPlaylistName.value.length
+    // Update Combined Playlist Description char counter
+    this.updateDestinationPlaylistDescCounter(
+      this.destinationPlaylisDescription.value.length
     );
   }
-  updateDestinationPlaylistCounter(count) {
-    this.destinationPlaylistCounter.innerText = `${count}/${PLAYLIST_MAX_LENGTH}`;
+  updateDestinationPlaylistDescCounter(count) {
+    this.destinationPlaylistDescCounter.innerText = `${count}/${PLAYLIST_DESCRIPTION_MAX_LENGTH}`;
+  }
+  updateDestinationPlaylistNameCounter(count) {
+    this.destinationPlaylistNameCounter.innerText = `${count}/${PLAYLIST_NAME_MAX_LENGTH}`;
   }
 }
 
