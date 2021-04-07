@@ -3,16 +3,22 @@ import { Request, Response } from 'express'
 import * as admin from 'firebase-admin'
 import { Playlist, PlaylistResponse } from '../types/spotify'
 
-const getSpotifyPlaylistRecusive = async (
+const getSpotifyPlaylistRecursive = async (
   client: AxiosInstance,
   url: string,
+  limit: number,
 ): Promise<Playlist[]> => {
-  const data = (await client.get<PlaylistResponse>(url)).data
-  console.log(data)
+  const data = (
+    await client.get<PlaylistResponse>(url, {
+      params: {
+        limit,
+      },
+    })
+  ).data
   if (data.next) {
     return [
       ...data.items,
-      ...(await getSpotifyPlaylistRecusive(client, data.next)),
+      ...(await getSpotifyPlaylistRecursive(client, data.next, limit)),
     ]
   }
   return data.items
@@ -34,9 +40,10 @@ export const getAllPlaylists = async (
         authorization: `Bearer ${spotifyToken}`,
       },
     })
-    const playlists: Playlist[] = await getSpotifyPlaylistRecusive(
+    const playlists: Playlist[] = await getSpotifyPlaylistRecursive(
       client,
       'https://api.spotify.com/v1/me/playlists',
+      50,
     )
     res.send(playlists)
   } catch (e) {
