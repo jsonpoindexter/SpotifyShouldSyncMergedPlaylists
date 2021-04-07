@@ -83,6 +83,9 @@ class Main {
         "click",
         this.onSignOutButtonClick.bind(this)
       );
+      this.destinationPlaylistName.addEventListener("input", (event) =>
+        this.updateDestinationPlaylistCounter(event.target.value.length)
+      );
     });
   }
 
@@ -193,7 +196,13 @@ class Main {
     this.destinationPlaylistName.value = newPlaylistName;
 
     // Update Combined Playlist Name char count
-    this.destinationPlaylistCounter.innerText = `${this.destinationPlaylistName.value.length}/${PLAYLIST_MAX_LENGTH}`;
+    this.updateDestinationPlaylistCounter(
+      this.destinationPlaylistName.value.length
+    );
+  }
+  updateDestinationPlaylistCounter(count) {
+    console.log("update counter");
+    this.destinationPlaylistCounter.innerText = `${count}/${PLAYLIST_MAX_LENGTH}`;
   }
 }
 
