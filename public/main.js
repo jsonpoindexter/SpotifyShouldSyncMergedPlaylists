@@ -98,8 +98,12 @@ class Main {
       })
       .forEach((playlist) => {
         // Populate playlist unordered list
-        const playlistItem = document.createElement("li");
-        playlistItem.setAttribute("class", "list-group-item");
+        const playlistItem = document.createElement("a");
+        playlistItem.href = "#";
+        playlistItem.setAttribute(
+          "class",
+          "list-group-item list-group-item-action"
+        );
         playlistItem.setAttribute("id", playlist.id);
         const playlistImg = document.createElement("img");
         playlistImg.classList.add("playlist-avatar");
