@@ -2,27 +2,30 @@
 const PLAYLIST_MAX_LENGTH = 100;
 
 // Example starter JavaScript for disabling form submissions if there are invalid fields
-(function () {
-  "use strict";
-
-  // Fetch all the forms we want to apply custom Bootstrap validation styles to
-  const forms = document.querySelectorAll(".needs-validation");
-
-  // Loop over them and prevent submission
-  Array.prototype.slice.call(forms).forEach(function (form) {
-    form.addEventListener(
-      "submit",
-      function (event) {
-        if (!form.checkValidity()) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        form.classList.add("was-validated");
-      },
-      false
-    );
-  });
-})();
+// (function () {
+//   "use strict";
+//
+//   // Fetch all the forms we want to apply custom Bootstrap validation styles to
+//   const forms = document.querySelectorAll(".needs-validation");
+//
+//   // Loop over them and prevent submission
+//   Array.prototype.slice.call(forms).forEach(function (form) {
+//     form.addEventListener(
+//       "submit",
+//       function (event) {
+//
+//         event.preventDefault();
+//         if (!form.checkValidity()) {
+//
+//           event.stopPropagation();
+//         }
+//
+//         form.classList.add("was-validated");
+//       },
+//       false
+//     );
+//   });
+// })();
 
 class Main {
   constructor() {
@@ -37,7 +40,6 @@ class Main {
         ? "http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app"
         : "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app";
     document.addEventListener("DOMContentLoaded", () => {
-      console.log(this);
       // Handle customToken returned from auth window closing
       window.onmessage = function (e) {
         if (e.data) {
@@ -65,6 +67,9 @@ class Main {
       this.destinationPlaylistCounter = document.getElementById(
         "destination-playlist-counter"
       );
+      this.desintationPlaylistSubmit = document.getElementById(
+        "destination-playlist-submit"
+      );
       this.navbarProfileWrapper = document.getElementById(
         "navbar-profile-wrapper"
       );
@@ -86,11 +91,35 @@ class Main {
       this.destinationPlaylistName.addEventListener("input", (event) =>
         this.updateDestinationPlaylistCounter(event.target.value.length)
       );
+      this.destinationPlaylistForm.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+          if (!this.destinationPlaylistForm.checkValidity()) {
+            event.stopPropagation();
+          }
+          this.destinationPlaylistForm.classList.add("was-validated");
+          const token = await firebase.auth().currentUser.getIdToken();
+          const response = await fetch(
+            `${this.baseUrl}/spotify/playlists/combine`,
+            {
+              body: JSON.stringify({
+                playlists: this.selectPlaylists,
+                name: this.destinationPlaylistName.value,
+              }),
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        },
+        false
+      );
     });
   }
 
   async onAuthStateChanged(user) {
-    console.log(this);
     // Skip token refresh.
     if (user && user.uid === this.lastUid) return;
     this.loadingCard.style.display = "none";
@@ -201,7 +230,6 @@ class Main {
     );
   }
   updateDestinationPlaylistCounter(count) {
-    console.log("update counter");
     this.destinationPlaylistCounter.innerText = `${count}/${PLAYLIST_MAX_LENGTH}`;
   }
 }
