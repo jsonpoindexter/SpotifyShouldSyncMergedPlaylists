@@ -135,6 +135,7 @@ class Main {
       if (this.useLocal)
         localStorage.setItem("playlists", JSON.stringify(this.playlists));
     }
+    document.getElementById("source-playlist-loading").classList.add("d-none");
     this.createSourcePlaylistTable();
   }
 
