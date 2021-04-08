@@ -39,14 +39,24 @@ export const postCombinePlaylists = async (
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() })
   }
-  // const { name, playlistsIds, description } = req.body
+  const { name, playlistsIds, description } = req.body
+
+  const spotifyClient = await new SpotifyClient(req.user.uid)
+  const playlistTracks = await spotifyClient.getPlaylistItemsRecursive(
+    playlistsIds[0],
+    100,
+    0,
+    'items(added_at,track(id))',
+  )
+  console.log(playlistTracks)
 
   // Fetch songs in playlistIds
+
   // Create destination plyalist w/ name, descriotion and songs from playlistIds
   // Add new destinationPlaylistId, and sourcePlaylistIds to DB so schedular can use to sync
   // Respond with new playlist id or playlist obj
 
-  return res.send()
+  return res.status(200).send(playlistTracks)
 }
 
 // /**

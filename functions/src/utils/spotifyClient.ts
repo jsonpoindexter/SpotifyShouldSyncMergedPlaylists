@@ -1,6 +1,11 @@
 import axios, { AxiosInstance } from 'axios'
 import * as admin from 'firebase-admin'
-import { Playlist, PlaylistsResponse } from '../types/spotify'
+import {
+  PagingObject,
+  Playlist,
+  PlaylistsResponse,
+  Track,
+} from '../types/spotify'
 
 const BASE_URL = 'https://api.spotify.com/v1'
 
@@ -61,5 +66,55 @@ export class SpotifyClient {
       ]
     }
     return playlistsResponse.items
+  }
+
+  getPlaylistItemsRecursive = async (
+    playlistId: string,
+    limit = 100,
+    offset = 0,
+    fields?: string,
+  ): Promise<Track[]> => {
+    const tracksResponse = await this.getPlaylistItems(
+      playlistId,
+      limit,
+      offset,
+      fields,
+    )
+    if (tracksResponse.total === limit) {
+      return [
+        ...tracksResponse.items,
+        ...(await this.getPlaylistItemsRecursive(
+          tracksResponse.next.replace(BASE_URL, ''),
+          limit,
+          offset + limit,
+          fields,
+        )),
+      ]
+    }
+    return tracksResponse.items
+  }
+
+  /**
+   * Get a playlist owned by a Spotify user.
+   * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlists-tracks
+   */
+  getPlaylistItems = async (
+    playlistId: string,
+    limit: number,
+    offset: number,
+    fields?: string,
+  ): Promise<PagingObject<Track>> => {
+    return (
+      await this.client.get<PagingObject<Track>>(
+        `/playlists/${playlistId}/tracks`,
+        {
+          params: {
+            limit,
+            offset,
+            fields,
+          },
+        },
+      )
+    ).data
   }
 }

@@ -34,7 +34,7 @@ export interface PlaylistsResponse {
 }
 
 export interface Playlist {
-  collaborative: false
+  collaborative: boolean
   external_urls: {
     spotify: string
   }
@@ -53,10 +53,23 @@ export interface Playlist {
   }
   public: boolean
   snapshot_id: string
-  tracks: {
-    href: string
-    total: number
-  }
+  tracks: PagingObject<Track>
   type: string
   uri: string
+}
+
+export interface Track {
+  added_at: Date
+  is_local: boolean
+  id: string
+}
+
+export interface PagingObject<T> {
+  items: T[]
+  href: string
+  limit: number
+  next: string
+  offset: number
+  previous: string
+  total: number
 }
