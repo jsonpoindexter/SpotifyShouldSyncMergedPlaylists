@@ -80,11 +80,11 @@ export class SpotifyClient {
       offset,
       fields,
     )
-    if (tracksResponse.total === limit) {
+    if (tracksResponse.total > limit + offset) {
       return [
         ...tracksResponse.items,
         ...(await this.getPlaylistItemsRecursive(
-          tracksResponse.next.replace(BASE_URL, ''),
+          playlistId,
           limit,
           offset + limit,
           fields,

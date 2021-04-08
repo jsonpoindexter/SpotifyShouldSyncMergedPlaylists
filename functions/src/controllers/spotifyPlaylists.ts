@@ -46,9 +46,8 @@ export const postCombinePlaylists = async (
     playlistsIds[0],
     100,
     0,
-    'items(added_at,track(id))',
+    'offset,total,limit,items(added_at,track(id))',
   )
-  console.log(playlistTracks)
 
   // Fetch songs in playlistIds
 
@@ -59,6 +58,7 @@ export const postCombinePlaylists = async (
   return res.status(200).send(playlistTracks)
 }
 
+// NOTE: when we run sync process we pronanly want to start the OFFSET for playlist tracks near the playlist TOTAL since that will be the latest songsZ
 // /**
 //  * Sync songs from multiple sourcePlaylistIds into the destinationPlaylistId
 //  * @param sourcePlaylistIds
