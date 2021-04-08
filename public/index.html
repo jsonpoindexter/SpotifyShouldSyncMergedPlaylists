@@ -29,7 +29,7 @@
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 </head>
 <body class="bg-dark">
-<!-- Option 1: Bootstrap Bundle with Popper -->
+<!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
         crossorigin="anonymous"></script>
@@ -43,73 +43,90 @@
         </div>
     </div>
 </nav>
+
+<!--Creating playlist modal -->
+<div class="modal fade" id="creating-playlist-modal" tabindex="-1" aria-labelledby="creatingPlaylistModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- MAIN -->
 <main role="main" class="d-flex justify-content-center mt-5 vh-100">
-        <!-- LOADING USER STATE -->
-        <div id="loading-card" class="row spinner-border text-success mt-lg-5" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <!-- SIGNED OUT -->
-        <div id="signed-out-card" class="row text-center">
-            <!-- Card containing the sign-in UI -->
-            <p class="text-secondary">
-                This web application demonstrates how you can Sign In a Firebase app with Spotify.<br><br>
-                After sign-in you combine spotify playlists and keep them synced!<br><br>
-            </p>
-            <button id="sign-in-button"
-                    class="btn btn-outline-success text-success fw-bolder">
-                <!-- TODO: shrink spotify logo its sooo damn big  -->
-                Sign in with <img
-                    src="images/spotify-icons-logos/logos/01_RGB/02_PNG/Spotify_Logo_RGB_Green.png"
-                    height="50px" alt="Spotify Logo">
-            </button>
-        </div>
-        <!-- SIGNED IN -->
-        <div id="signed-in-card" class="container-fluid">
-            <div class="d-flex h-75">
-                <!-- SOURCE PLAYLIST -->
-                <div class="col-5 list-group overflow-auto table-responsive h-100 bg-secondary">
-                    <div id="source-playlist-loading" class="d-flex flex-column m-auto align-items-center">
-                        <p>Loading Your Spotify Playlists</p>
-                        <div class="row spinner-border " role="status"></div>
-                    </div>
-                    <div id="source-playlist-list" ></div>
+    <!-- LOADING USER STATE -->
+    <div id="loading-card" class="row spinner-border text-success mt-lg-5" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <!-- SIGNED OUT -->
+    <div id="signed-out-card" class="row text-center">
+        <!-- Card containing the sign-in UI -->
+        <p class="text-secondary">
+            This web application demonstrates how you can Sign In a Firebase app with Spotify.<br><br>
+            After sign-in you combine spotify playlists and keep them synced!<br><br>
+        </p>
+        <button id="sign-in-button"
+                class="btn btn-outline-success text-success fw-bolder">
+            <!-- TODO: shrink spotify logo its sooo damn big  -->
+            Sign in with <img
+                src="images/spotify-icons-logos/logos/01_RGB/02_PNG/Spotify_Logo_RGB_Green.png"
+                height="50px" alt="Spotify Logo">
+        </button>
+    </div>
+    <!-- SIGNED IN -->
+    <div id="signed-in-card" class="container-fluid">
+        <div class="d-flex h-75">
+            <!-- SOURCE PLAYLIST -->
+            <div class="col-5 list-group overflow-auto table-responsive h-100 bg-secondary">
+                <div id="source-playlist-loading" class="d-flex flex-column m-auto align-items-center">
+                    <p>Loading Your Spotify Playlists</p>
+                    <div class="row spinner-border " role="status"></div>
                 </div>
-
-                <!-- DESTINATION PLAYLIST -->
-                <form id="destination-playlist-form"
-                      class="col form-group text-secondary needs-validation align-self-center p-4" novalidate>
-                    <!-- NAME   -->
-                    <label for="destination-playlist-name">Name</label>
-                    <input minlength="1"
-                           id="destination-playlist-name" type="text"
-                           class="form-control text-secondary"
-                           required>
-                    <div class="invalid-feedback">
-                        Playlist name must at least 1 and no longer than 100 characters in length
-                    </div>
-                    <div id="destination-playlist-name-counter" class="text-end"></div>
-                    <!-- DESCRIPTION -->
-                    <div class="col">
-                        <label for="destination-playlist-description">Description</label>
-                        <textarea
-                                id="destination-playlist-description" class="form-control text-secondary"
-                                style="resize: none"
-                                rows="5">
-
-                        </textarea>
-                    </div>
-                    <div id="destination-playlist-description-counter" class="text-end"></div>
-
-                    <div class="mt-2 d-flex justify-content-end">
-                        <button id="destination-playlist-submit" class="btn btn-success" type="submit">Create Playlist
-                        </button>
-                    </div>
-                </form>
+                <div id="source-playlist-list"></div>
             </div>
 
+            <!-- DESTINATION PLAYLIST -->
+            <form id="destination-playlist-form"
+                  class="col form-group text-secondary needs-validation align-self-center p-4" novalidate>
+                <!-- NAME   -->
+                <label for="destination-playlist-name">Name</label>
+                <input minlength="1"
+                       id="destination-playlist-name" type="text"
+                       class="form-control text-secondary"
+                       required>
+                <div class="invalid-feedback">
+                    Playlist name must at least 1 and no longer than 100 characters in length
+                </div>
+                <div id="destination-playlist-name-counter" class="text-end"></div>
+                <!-- DESCRIPTION -->
+                <div class="col">
+                    <label for="destination-playlist-description">Description</label>
+                    <textarea
+                            id="destination-playlist-description" class="form-control text-secondary"
+                            style="resize: none"
+                            rows="5">
+
+                        </textarea>
+                </div>
+                <div id="destination-playlist-description-counter" class="text-end"></div>
+
+                <div class="mt-2 d-flex justify-content-end">
+                    <button id="destination-playlist-submit" class="btn btn-success" type="submit">Create Playlist
+                    </button>
+                </div>
+            </form>
         </div>
-<!--    </div>-->
+    </div>
 </main>
 
 

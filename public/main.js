@@ -71,35 +71,43 @@ class Main {
       this.destinationPlaylistName.addEventListener("input", (event) =>
         this.updateDestinationPlaylistNameCounter(event.target.value.length)
       );
+      //
       this.destinationPlaylistForm.addEventListener(
         "submit",
-        async (event) => {
-          event.preventDefault();
-          this.destinationPlaylistForm.classList.add("was-validated");
-          if (!this.destinationPlaylistForm.checkValidity()) {
-            event.stopPropagation();
-          } else {
-            const token = await firebase.auth().currentUser.getIdToken();
-            const response = await fetch(
-              `${this.baseUrl}/spotify/playlists/combine`,
-              {
-                body: JSON.stringify({
-                  playlistIds: this.selectPlaylists,
-                  name: this.destinationPlaylistName.value,
-                  description: this.destinationPlaylisDescription.value,
-                }),
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-          }
-        },
+        this.onCreatePlaylist.bind(this),
         false
       );
     });
+  }
+
+  async onCreatePlaylist(event) {
+    event.preventDefault();
+    this.destinationPlaylistForm.classList.add("was-validated");
+    if (!this.destinationPlaylistForm.checkValidity()) {
+      event.stopPropagation();
+    } else {
+      const creatingPlaylistModal = new bootstrap.Modal(
+        document.getElementById("creating-playlist-modal")
+      );
+      creatingPlaylistModal.toggle();
+      const token = await firebase.auth().currentUser.getIdToken();
+      const response = await fetch(
+        `${this.baseUrl}/spotify/playlists/combine`,
+        {
+          body: JSON.stringify({
+            playlistIds: this.selectPlaylists,
+            name: this.destinationPlaylistName.value,
+            description: this.destinationPlaylisDescription.value,
+          }),
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      creatingPlaylistModal.toggle();
+    }
   }
 
   async onAuthStateChanged(user) {
@@ -108,8 +116,6 @@ class Main {
     this.loadingCard.style.display = "none";
     if (user) {
       this.lastUid = user.uid;
-      // this.nameContainer.innerText = user.displayName;
-      // this.uidContainer.innerText = user.uid;
       this.profilePic.src = user.photoURL;
       this.navbarProfileWrapper.style.display = "block";
       this.signedOutCard.style.display = "none";
