@@ -61,7 +61,10 @@ export interface Playlist {
 export interface Track {
   added_at: Date
   is_local: boolean
-  id: string
+  track: {
+    id: string
+    uri: string
+  }
 }
 
 export interface PagingObject<T> {

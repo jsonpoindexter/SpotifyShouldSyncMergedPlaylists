@@ -128,11 +128,27 @@ export class SpotifyClient {
     isPublic: boolean,
     collaborative: boolean,
     description?: string,
-  ): Promise<AxiosResponse<Playlist>> =>
-    this.client.post(`/users/${this.userId}/playlists`, {
-      name,
-      public: isPublic,
-      collaborative,
-      description,
-    })
+  ): Promise<Playlist> =>
+    (
+      await this.client.post(`/users/${this.userId}/playlists`, {
+        name,
+        public: isPublic,
+        collaborative,
+        description,
+      })
+    ).data
+
+  /**
+   * https://developer.spotify.com/documentation/web-api/reference/#endpoint-add-tracks-to-playlist
+   */
+  addItemsToPlaylist = async (
+    playlistId: string,
+    tracks: string[], // trackObj.track.uri[], ex: ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh","spotify:track:1301WleyT98MSxVHPZCA6M"]
+    position?: number,
+  ): Promise<{ snapshot_id: string }> =>
+    (
+      await this.client.post(`/playlists/${playlistId}/tracks`, tracks, {
+        params: { position },
+      })
+    ).data
 }
