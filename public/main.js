@@ -84,7 +84,7 @@ class Main {
               `${this.baseUrl}/spotify/playlists/combine`,
               {
                 body: JSON.stringify({
-                  playlistsIds: this.selectPlaylists,
+                  playlistIds: this.selectPlaylists,
                   name: this.destinationPlaylistName.value,
                   description: this.destinationPlaylisDescription.value,
                 }),

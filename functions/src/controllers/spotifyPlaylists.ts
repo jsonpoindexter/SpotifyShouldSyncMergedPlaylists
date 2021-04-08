@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { Playlist } from '../types/spotify'
+import { Playlist, Track } from '../types/spotify'
 import { validationResult } from 'express-validator'
 import { SpotifyClient } from '../utils/spotifyClient'
 
@@ -22,7 +22,7 @@ export const getAllPlaylists = async (
 
 interface CombinePlaylistRequestBody {
   name: string
-  playlistsIds: string[]
+  playlistIds: string[]
   description?: string
 }
 
@@ -32,22 +32,32 @@ interface CombinePlaylistRequestBody {
  * @param res
  */
 export const postCombinePlaylists = async (
-  req: Request<unknown, CombinePlaylistRequestBody>,
+  req: Request,
   res: Response,
 ): Promise<Response> => {
-  const errors = validationResult(req as Request)
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() })
   }
-  const { name, playlistsIds, description } = req.body
+  const {
+    name,
+    playlistIds,
+    description,
+  } = req.body as CombinePlaylistRequestBody
 
   const spotifyClient = await new SpotifyClient(req.user.uid)
-  const playlistTracks = await spotifyClient.getPlaylistItemsRecursive(
-    playlistsIds[0],
-    100,
-    0,
-    'offset,total,limit,items(added_at,track(id))',
-  )
+  const results: Track[] = (
+    await Promise.all<Track[]>(
+      playlistIds.map((playlistId) =>
+        spotifyClient.getPlaylistItemsRecursive(
+          playlistId,
+          100,
+          0,
+          'offset,total,limit,items(track(id))',
+        ),
+      ),
+    )
+  ).flat()
 
   // Fetch songs in playlistIds
 
@@ -55,7 +65,7 @@ export const postCombinePlaylists = async (
   // Add new destinationPlaylistId, and sourcePlaylistIds to DB so schedular can use to sync
   // Respond with new playlist id or playlist obj
 
-  return res.status(200).send(playlistTracks)
+  return res.status(200).send(results)
 }
 
 // NOTE: when we run sync process we pronanly want to start the OFFSET for playlist tracks near the playlist TOTAL since that will be the latest songsZ

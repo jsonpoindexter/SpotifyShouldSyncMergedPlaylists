@@ -52,7 +52,7 @@ app.post(
         isLength: { options: { min: 0, max: 100 } },
         notEmpty: true,
       },
-      playlistsIds: {
+      playlistIds: {
         isArray: { options: { min: 1, max: 10 } }, // TODO: enforce client side
         notEmpty: true,
       },
