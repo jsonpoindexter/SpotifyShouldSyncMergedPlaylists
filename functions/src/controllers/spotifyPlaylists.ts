@@ -46,7 +46,7 @@ export const postCombinePlaylists = async (
   } = req.body as CombinePlaylistRequestBody
 
   const spotifyClient = await new SpotifyClient(req.user.uid)
-  const results: Track[] = (
+  const playlistTracks: Track[] = (
     await Promise.all<Track[]>(
       playlistIds.map((playlistId) =>
         spotifyClient.getPlaylistItemsRecursive(
@@ -59,13 +59,20 @@ export const postCombinePlaylists = async (
     )
   ).flat()
 
+  const createdPlaylist = await spotifyClient.createPlaylist(
+    name,
+    false,
+    false,
+    description,
+  )
+
   // Fetch songs in playlistIds
 
   // Create destination plyalist w/ name, descriotion and songs from playlistIds
   // Add new destinationPlaylistId, and sourcePlaylistIds to DB so schedular can use to sync
   // Respond with new playlist id or playlist obj
 
-  return res.status(200).send(results)
+  return res.status(200).send(createdPlaylist.data)
 }
 
 // NOTE: when we run sync process we pronanly want to start the OFFSET for playlist tracks near the playlist TOTAL since that will be the latest songsZ

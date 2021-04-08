@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios'
+import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import * as admin from 'firebase-admin'
 import {
   PagingObject,
@@ -11,7 +11,9 @@ const BASE_URL = 'https://api.spotify.com/v1'
 
 export class SpotifyClient {
   client: AxiosInstance
+  userId: string
   constructor(userId: string) {
+    this.userId = userId.replace('spotify:', '')
     this.client = axios.create({
       baseURL: BASE_URL,
     })
@@ -117,4 +119,20 @@ export class SpotifyClient {
       )
     ).data
   }
+
+  /**
+   * https://developer.spotify.com/documentation/web-api/reference/#endpoint-create-playlist
+   */
+  createPlaylist = async (
+    name: string,
+    isPublic: boolean,
+    collaborative: boolean,
+    description?: string,
+  ): Promise<AxiosResponse<Playlist>> =>
+    this.client.post(`/users/${this.userId}/playlists`, {
+      name,
+      public: isPublic,
+      collaborative,
+      description,
+    })
 }
