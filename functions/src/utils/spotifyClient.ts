@@ -1,11 +1,11 @@
-import axios, { AxiosInstance } from 'axios'
-import * as admin from 'firebase-admin'
+import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
 import {
   PagingObject,
   Playlist,
   PlaylistsResponse,
   Track,
 } from '../types/spotify'
+import { db } from '../index'
 
 const BASE_URL = 'https://api.spotify.com/v1'
 
@@ -17,12 +17,25 @@ export class SpotifyClient {
     this.client = axios.create({
       baseURL: BASE_URL,
     })
+    // this.client.interceptors.response.use(
+    //   (response: AxiosResponse) => response,
+    //   async (error: AxiosError) => {
+    //     const originalRequest = error.config
+    //     if (error.response?.status === 401 && !originalRequest._retry) {
+    //       originalRequest._retry = true
+    //       const accessToken: string = await this.refreshAccessToken()
+    //       this.client.defaults.headers = {
+    //         Authorization: `Bearer ${accessToken}`,
+    //       }
+    //     }
+    //   },
+    // )
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return (async () => {
       const spotifyToken = (
-        await admin.database().ref(`/spotifyAccessToken/${userId}`).get()
-      ).val()
+        await db.collection('spotifyAccessTokens').doc(userId).get()
+      ).data()?.access_token
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       this.client.defaults.headers = {

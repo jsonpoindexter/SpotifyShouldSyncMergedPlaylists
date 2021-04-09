@@ -8,6 +8,16 @@ import * as corsModule from 'cors'
 import { validateFirebaseIdToken } from './utils/firebase'
 import { checkSchema } from 'express-validator'
 
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: serviceAccount.project_id,
+    clientEmail: serviceAccount.client_email,
+    privateKey: serviceAccount.private_key,
+  }),
+  databaseURL: `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`,
+})
+export const db = admin.firestore()
+
 // Controllers
 import * as spotifyAuthController from './controllers/spotifyAuth'
 import * as spotifyPlaylistController from './controllers/spotifyPlaylists'
@@ -20,15 +30,6 @@ export const BASE_URL =
 console.log(`BASE_URL: ${BASE_URL}`)
 
 const cors = corsModule({ origin: true })
-
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: serviceAccount.project_id,
-    clientEmail: serviceAccount.client_email,
-    privateKey: serviceAccount.private_key,
-  }),
-  databaseURL: `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`,
-})
 
 const app = express()
 app.use(cors)
