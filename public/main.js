@@ -1,6 +1,8 @@
 "use strict";
-const PLAYLIST_NAME_MAX_LENGTH = 100;
-const PLAYLIST_DESCRIPTION_MAX_LENGTH = 300;
+
+const PLAYLIST_NAME_MAX_LENGTH = 100; // Max playlist name length defined by Spotify
+const PLAYLIST_DESCRIPTION_MAX_LENGTH = 300; // Max playlist description length defined by Spotify
+const CREATING_PLAYLIST_MIN_MS = 2000; // Min amount of time before going to success or failure modal status
 
 class Main {
   constructor() {
@@ -17,15 +19,7 @@ class Main {
         : "https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app";
     document.addEventListener("DOMContentLoaded", () => {
       // Handle customToken returned from auth window closing
-      window.onmessage = function (e) {
-        if (e.data) {
-          firebase.auth().signInWithCustomToken(e.data);
-        } else {
-          console.log(
-            "nothing was returned from window: expected custom token"
-          );
-        }
-      };
+      window.onmessage = this.handleAuthWindowClose;
       // Load firebase
       firebase.auth().onAuthStateChanged(this.onAuthStateChanged.bind(this));
 
@@ -80,33 +74,112 @@ class Main {
     });
   }
 
+  handleAuthWindowClose(event) {
+    if (event.data) {
+      firebase.auth().signInWithCustomToken(event.data);
+    } else {
+      console.log(
+        "nothing was returned from auth window: expected custom token"
+      );
+    }
+  }
   async onCreatePlaylist(event) {
     event.preventDefault();
     this.destinationPlaylistForm.classList.add("was-validated");
     if (!this.destinationPlaylistForm.checkValidity()) {
       event.stopPropagation();
     } else {
+      // Disable exiting modal until the playlist api call responds
       const creatingPlaylistModal = new bootstrap.Modal(
-        document.getElementById("creating-playlist-modal")
+        document.getElementById("creating-playlist-modal"),
+        { backdrop: "static", keyboard: false }
       );
-      creatingPlaylistModal.toggle();
-      const token = await firebase.auth().currentUser.getIdToken();
-      const response = await fetch(
-        `${this.baseUrl}/spotify/playlists/combine`,
-        {
-          body: JSON.stringify({
-            playlistIds: this.selectPlaylists,
-            name: this.destinationPlaylistName.value,
-            description: this.destinationPlaylisDescription.value,
-          }),
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      creatingPlaylistModal.toggle();
+      // Reset validation on modal close
+      document
+        .getElementById("creating-playlist-modal")
+        .addEventListener("hidden.bs.modal", () => {
+          // Reset form validation
+          this.destinationPlaylistForm.classList.remove("was-validated");
+          // Remove white status text from modal
+          document
+            .getElementById("creating-playlist-modal-status")
+            .classList.remove("text-white");
+        });
+      // Show the spinner if its hidden
+      document
+        .getElementById("creating-playlist-modal-spinner")
+        .classList.remove("visually-hidden");
+      // Set initial modal status text
+      document.getElementById("creating-playlist-modal-status").innerHTML =
+        "Creating Playlist...";
+      // Remove modal content background anger if it exists
+      document
+        .getElementById("creating-playlist-modal-content")
+        .classList.remove("bg-danger");
+      // Hide the X close button by default
+      document
+        .getElementById("creating-playlist-modal-close")
+        .classList.add("visually-hidden");
+      creatingPlaylistModal.show();
+
+      try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        const startDate = new Date();
+        const response = await fetch(
+          `${this.baseUrl}/spotify/playlists/combine`,
+          {
+            body: JSON.stringify({
+              playlistIds: this.selectPlaylists,
+              name: this.destinationPlaylistName.value,
+              description: this.destinationPlaylisDescription.value,
+            }),
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const diff = new Date() - startDate;
+        if (diff < CREATING_PLAYLIST_MIN_MS)
+          await new Promise((resolve) =>
+            setTimeout(resolve, CREATING_PLAYLIST_MIN_MS - diff)
+          );
+        // Hide the spinner
+        document
+          .getElementById("creating-playlist-modal-spinner")
+          .classList.add("visually-hidden");
+        // Show modal close button
+        document
+          .getElementById("creating-playlist-modal-close")
+          .classList.remove("visually-hidden");
+        if (response.status !== 200) throw Error();
+        const body = await response.json();
+        // Change modal status text to success
+        document.getElementById(
+          "creating-playlist-modal-status"
+        ).innerHTML = `Created playlist!\nCheck your spotify player or click <a href="${body.external_urls.spotify}">Here</a>`;
+      } catch (error) {
+        console.log(error);
+        // Hide the spinner
+        document
+          .getElementById("creating-playlist-modal-spinner")
+          .classList.add("visually-hidden");
+        // Show modal close button
+        document
+          .getElementById("creating-playlist-modal-close")
+          .classList.remove("visually-hidden");
+        // Set background to danger / red
+        document
+          .getElementById("creating-playlist-modal-content")
+          .classList.add("bg-danger");
+        document
+          .getElementById("creating-playlist-modal-status")
+          .classList.add("text-white");
+        // Change modal status text to error
+        document.getElementById("creating-playlist-modal-status").innerHTML =
+          "Error creating playlist";
+      }
     }
   }
 
@@ -120,6 +193,7 @@ class Main {
       this.navbarProfileWrapper.style.display = "block";
       this.signedOutCard.style.display = "none";
       this.signedInCard.style.display = "block";
+      this.destinationPlaylistForm.classList.remove("was-validated");
       await this.fetchPlaylists();
     } else {
       this.lastUid = null;
