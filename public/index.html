@@ -35,7 +35,7 @@
         crossorigin="anonymous"></script>
 
 <nav class="navbar navbar-dark shadow-lg" role="navigation">
-    <div class="container-fluid">
+    <div class="container">
         <span class="navbar-brand">Spotify Should Sync Merged Playlists</span>
         <div id="navbar-profile-wrapper" style="display: none;">
             <img id="navbar-profile-pic" alt="profile picture" width="40px" class="rounded-circle me-3" src=""/>
@@ -52,7 +52,7 @@
                 <div id="creating-playlist-modal-spinner" class="spinner-border text-success" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <span id="creating-playlist-modal-status" class="align-self-center ms-3" ></span>
+                <span id="creating-playlist-modal-status" class="align-self-center ms-3 fade"></span>
                 <button type="button" id="creating-playlist-modal-close" class="btn-close visually-hidden ms-auto"  data-bs-dismiss="modal" aria-label="Close">
                 </button>
             </div>
@@ -81,7 +81,7 @@
         </button>
     </div>
     <!-- SIGNED IN -->
-    <div id="signed-in-card" class="container-fluid">
+    <div id="signed-in-card" class="container">
         <div class="d-flex h-75">
             <!-- SOURCE PLAYLIST -->
             <div class="col-5 list-group overflow-auto table-responsive h-100 bg-secondary">

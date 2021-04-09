@@ -254,7 +254,7 @@ class Main {
         playlistImg.src = playlist.images[0].url;
         const playlistName = document.createElement("span");
         playlistName.setAttribute("class", "playlist-name");
-        playlistName.innerText = playlist.name;
+        playlistName.innerHTML = `${playlist.name} (${playlist.tracks.total})`;
         playlistItem.append(playlistImg, playlistName);
         playlistItem.addEventListener("click", () => {
           playlistItem.classList.toggle("active");
