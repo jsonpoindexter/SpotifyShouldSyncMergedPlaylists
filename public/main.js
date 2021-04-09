@@ -89,38 +89,40 @@ class Main {
     if (!this.destinationPlaylistForm.checkValidity()) {
       event.stopPropagation();
     } else {
-      // Disable exiting modal until the playlist api call responds
-      const creatingPlaylistModal = new bootstrap.Modal(
-        document.getElementById("creating-playlist-modal"),
-        { backdrop: "static", keyboard: false }
-      );
+      // Disable exiting modal exit until the playlist api call responds
+      const modalEl = document.getElementById("creating-playlist-modal");
+      const modal = new bootstrap.Modal(modalEl, {
+        backdrop: "static",
+        keyboard: false,
+      });
       // Reset validation on modal close
-      document
-        .getElementById("creating-playlist-modal")
-        .addEventListener("hidden.bs.modal", () => {
-          // Reset form validation
-          this.destinationPlaylistForm.classList.remove("was-validated");
-          // Remove white status text from modal
-          document
-            .getElementById("creating-playlist-modal-status")
-            .classList.remove("text-white");
-        });
-      // Show the spinner if its hidden
-      document
-        .getElementById("creating-playlist-modal-spinner")
-        .classList.remove("visually-hidden");
+      modalEl.addEventListener("hidden.bs.modal", () => {
+        // Reset form validation
+        this.destinationPlaylistForm.classList.remove("was-validated");
+      });
+      const modalStatusText = document.getElementById(
+        "creating-playlist-modal-status"
+      );
+      const modalSpinner = document.getElementById(
+        "creating-playlist-modal-spinner"
+      );
+      const modalContent = document.getElementById(
+        "creating-playlist-modal-content"
+      );
+      const modalClose = document.getElementById(
+        "creating-playlist-modal-close"
+      );
       // Set initial modal status text
-      document.getElementById("creating-playlist-modal-status").innerHTML =
-        "Creating Playlist...";
-      // Remove modal content background anger if it exists
-      document
-        .getElementById("creating-playlist-modal-content")
-        .classList.remove("bg-danger");
+      modalStatusText.innerHTML = "Creating Playlist...";
+      // Remove white status text from modal
+      modalStatusText.classList.remove("text-white");
+      // Show the spinner if its hidden
+      modalSpinner.classList.remove("visually-hidden");
+      // Remove modal content background danger if it exists
+      modalContent.classList.remove("bg-danger", "bg-success");
       // Hide the X close button by default
-      document
-        .getElementById("creating-playlist-modal-close")
-        .classList.add("visually-hidden");
-      creatingPlaylistModal.show();
+      modalClose.classList.add("visually-hidden");
+      modal.show();
 
       try {
         const token = await firebase.auth().currentUser.getIdToken();
@@ -146,39 +148,26 @@ class Main {
             setTimeout(resolve, CREATING_PLAYLIST_MIN_MS - diff)
           );
         // Hide the spinner
-        document
-          .getElementById("creating-playlist-modal-spinner")
-          .classList.add("visually-hidden");
+        modalSpinner.classList.add("visually-hidden");
         // Show modal close button
-        document
-          .getElementById("creating-playlist-modal-close")
-          .classList.remove("visually-hidden");
+        modalClose.classList.remove("visually-hidden");
         if (response.status !== 200) throw Error();
         const body = await response.json();
         // Change modal status text to success
-        document.getElementById(
-          "creating-playlist-modal-status"
-        ).innerHTML = `Created playlist!\nCheck your spotify player or click <a href="${body.external_urls.spotify}">Here</a>`;
+        modalStatusText.innerHTML = `Created playlist!\nCheck your spotify player or click <a href="${body.external_urls.spotify}" target="_blank">Here</a>`;
+        modalStatusText.classList.add("text-white");
+        modalContent.classList.add("bg-success");
       } catch (error) {
         console.log(error);
         // Hide the spinner
-        document
-          .getElementById("creating-playlist-modal-spinner")
-          .classList.add("visually-hidden");
+        modalSpinner.classList.add("visually-hidden");
         // Show modal close button
-        document
-          .getElementById("creating-playlist-modal-close")
-          .classList.remove("visually-hidden");
+        modalClose.classList.remove("visually-hidden");
         // Set background to danger / red
-        document
-          .getElementById("creating-playlist-modal-content")
-          .classList.add("bg-danger");
-        document
-          .getElementById("creating-playlist-modal-status")
-          .classList.add("text-white");
+        modalContent.classList.add("bg-danger");
         // Change modal status text to error
-        document.getElementById("creating-playlist-modal-status").innerHTML =
-          "Error creating playlist";
+        modalStatusText.innerHTML = "Error creating playlist";
+        modalStatusText.classList.add("text-white");
       }
     }
   }
