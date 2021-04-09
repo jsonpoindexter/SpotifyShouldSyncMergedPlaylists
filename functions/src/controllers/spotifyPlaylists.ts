@@ -74,6 +74,10 @@ export const postCombinePlaylists = async (
       playlistTracks.splice(0, 100),
     )
   }
+
+  // Create / add sync job
+  // 1. create db entry w/ userId / sourcePlaylistIds&snapshotIds / destinationPlaylistId&lastSynced
+
   return res.status(200).send(createdPlaylist)
 }
 

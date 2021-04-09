@@ -1,11 +1,12 @@
 import axios from 'axios'
 import { Profile } from '../types/spotify'
 import { Request, Response } from 'express'
-import { BASE_URL } from '../index'
+import { BASE_URL, db } from '../index'
 import * as oauth2lib from 'simple-oauth2'
 import * as functions from 'firebase-functions'
 import * as crypto from 'crypto'
 import * as admin from 'firebase-admin'
+import { Token } from 'simple-oauth2'
 
 const credentials = {
   client: {
@@ -55,7 +56,7 @@ export const getCallback = async (
       userId,
       name,
       photoUrl,
-      accessToken.token.access_token,
+      accessToken.token,
     )
     // Serve an HTML page that signs the user in and updates the user profile.
     res.send(signInFirebaseTemplate(firebaseToken))
@@ -98,13 +99,13 @@ async function createFirebaseAccount(
   userId: string,
   name: string,
   photoUrl: string,
-  accessToken: string,
+  accessToken: Token,
 ) {
   // The uid we'll assign to the user.
   const uid = `spotify:${userId}`
-  const databaseTask = admin
-    .database()
-    .ref(`/spotifyAccessToken/${uid}`)
+  const firebaseTask = db
+    .collection('spotifyAccessTokens')
+    .doc(uid)
     .set(accessToken)
   // Create the custom token.
   // Create or update the user account.
@@ -127,7 +128,7 @@ async function createFirebaseAccount(
     })
 
   // Wait for all async task to complete then generate and return a custom auth token.
-  await Promise.all([userCreationTask, databaseTask])
+  await Promise.all([userCreationTask, firebaseTask])
   // Create a Firebase custom auth token.
   const token = await admin.auth().createCustomToken(uid)
   console.log('Created Custom token for UID "', uid, '" Token:', token)
