@@ -3,4 +3,6 @@ export class SyncJob {
   constructor(userId: string) {
     this.userId = userId
   }
+
+  // async syncPlaylist() {}
 }

@@ -105,6 +105,16 @@ export class SpotifyClient {
   }
 
   /**
+   * Get a single playlist
+   * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlist
+   * @param playlistId
+   * @param fields
+   */
+  getPlaylist = async (playlistId: string, fields: string): Promise<Playlist> =>
+    (await this.client.get(`/playlists/${playlistId}`, { params: { fields } }))
+      .data
+
+  /**
    * Recursively gets the current user's playlists
    * @param url
    * @param limit

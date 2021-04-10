@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
-import { Playlist, Track } from '../types/spotify'
+import { Playlist } from '../types/spotify'
 import { validationResult } from 'express-validator'
 import { SpotifyClient } from '../utils/spotifyClient'
+import { SyncPlaylist } from '../models/syncPlaylist'
 
 export const getAllPlaylists = async (
   req: Request,
@@ -46,48 +47,47 @@ export const postCombinePlaylists = async (
   } = req.body as CombinePlaylistRequestBody
 
   const spotifyClient = await new SpotifyClient(req.user.uid)
-  const playlistTracks: string[] = (
-    await Promise.all<Track[]>(
-      playlistIds.map((playlistId) =>
-        spotifyClient.getPlaylistItemsRecursive(
-          playlistId,
-          100,
-          0,
-          'offset,total,limit,items(track(uri))',
-        ),
+  const sourcePlaylists: Playlist[] = await Promise.all(
+    playlistIds.map((playlistId) =>
+      spotifyClient.getPlaylist(
+        playlistId,
+        'id,uri,snapshot_id,tracks.items(track(uri))',
       ),
-    )
+    ),
   )
-    .flat()
+
+  const tracks = sourcePlaylists
+    .flatMap((currentVal) => currentVal.tracks.items)
     .map((track) => track.track.uri)
 
-  const createdPlaylist = await spotifyClient.createPlaylist(
+  const destinationPlaylist = await spotifyClient.createPlaylist(
     name,
     false,
     false,
     description,
   )
 
-  while (playlistTracks.length > 0) {
+  while (tracks.length > 0) {
     await spotifyClient.addItemsToPlaylist(
-      createdPlaylist.id,
-      playlistTracks.splice(0, 100),
+      destinationPlaylist.id,
+      tracks.splice(0, 100),
     )
   }
+  await SyncPlaylist.set(req.user.uid, {
+    sourcePlaylists: sourcePlaylists.map((playlist) => ({
+      id: playlist.id,
+      uri: playlist.uri,
+      snapshot_id: playlist.snapshot_id,
+    })),
+    destinationPlaylist: {
+      id: destinationPlaylist.id,
+      uri: destinationPlaylist.uri,
+      snapshot_id: destinationPlaylist.snapshot_id,
+    },
+    lastSynced: new Date(),
+  })
 
-  // Create / add sync job
-  // 1. create db entry w/ userId / sourcePlaylistIds&snapshotIds / destinationPlaylistId&lastSynced
-
-  return res.status(200).send(createdPlaylist)
+  return res.status(200).send(destinationPlaylist)
 }
 
 // NOTE: when we run sync process we pronanly want to start the OFFSET for playlist tracks near the playlist TOTAL since that will be the latest songsZ
-// /**
-//  * Sync songs from multiple sourcePlaylistIds into the destinationPlaylistId
-//  * @param sourcePlaylistIds
-//  * @param destinationPlaylistId
-//  */
-// const syncPlaylists = (
-//   sourcePlaylistIds: string[],
-//   destinationPlaylistId: string,
-// ) => {}
