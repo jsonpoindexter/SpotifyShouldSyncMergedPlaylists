@@ -8,7 +8,7 @@ import * as crypto from 'crypto'
 import * as admin from 'firebase-admin'
 import { Token } from 'simple-oauth2'
 
-const credentials = {
+export const credentials = {
   client: {
     id: functions.config().spotify.client_id,
     secret: functions.config().spotify.client_secret,
@@ -107,6 +107,10 @@ async function createFirebaseAccount(
     .collection('spotifyAccessTokens')
     .doc(uid)
     .set(accessToken)
+    .catch((error) => {
+      console.log('err')
+      throw error
+    })
   // Create the custom token.
   // Create or update the user account.
   const userCreationTask = admin

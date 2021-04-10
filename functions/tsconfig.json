@@ -10,7 +10,10 @@
     "target": "es2017",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "lib": ["ES2019"]
+    "lib": [
+      "ES2019",
+      "dom"
+    ]
   },
   "compileOnSave": true,
   "include": ["src"]

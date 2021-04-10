@@ -1,48 +1,91 @@
-import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
+import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import {
   PagingObject,
   Playlist,
   PlaylistsResponse,
+  Token,
   Track,
 } from '../types/spotify'
 import { db } from '../index'
+import { credentials } from '../controllers/spotifyAuth'
 
 const BASE_URL = 'https://api.spotify.com/v1'
 
 export class SpotifyClient {
-  client: AxiosInstance
+  client!: AxiosInstance
   userId: string
+  token!: Token // The full spotify token
   constructor(userId: string) {
     this.userId = userId.replace('spotify:', '')
     this.client = axios.create({
       baseURL: BASE_URL,
     })
-    // this.client.interceptors.response.use(
-    //   (response: AxiosResponse) => response,
-    //   async (error: AxiosError) => {
-    //     const originalRequest = error.config
-    //     if (error.response?.status === 401 && !originalRequest._retry) {
-    //       originalRequest._retry = true
-    //       const accessToken: string = await this.refreshAccessToken()
-    //       this.client.defaults.headers = {
-    //         Authorization: `Bearer ${accessToken}`,
-    //       }
-    //     }
-    //   },
-    // )
+
+    this.client.interceptors.response.use(
+      (response: AxiosResponse) => response,
+      async (error) => {
+        // Note: cant specify AxiosRequestConfig here bc _retry doesnt exist on it
+        const originalRequest = error.config
+        // Catch all 1st time auth error responses
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true
+          try {
+            await this.refreshAccessToken()
+            originalRequest.headers[
+              'Authorization'
+            ] = `Bearer ${this.token.access_token}`
+          } catch (e) {
+            return Promise.reject(e)
+          }
+          return this.client(originalRequest)
+        }
+        return Promise.reject(error)
+      },
+    )
+    // Fetch access token from firebase
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return (async () => {
-      const spotifyToken = (
-        await db.collection('spotifyAccessTokens').doc(userId).get()
-      ).data()?.access_token
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      const doc = await db.collection('spotifyAccessTokens').doc(userId).get()
+      if (!doc.exists)
+        throw Error(`doc for spotifyAccessTokens\\${userId} does not exist`)
+      this.token = doc.data() as Token
       this.client.defaults.headers = {
-        Authorization: `Bearer ${spotifyToken}`,
+        Authorization: `Bearer ${this.token.access_token}`,
       }
       return this
     })()
+  }
+
+  /**
+   * Refresh access token
+   * https://developer.spotify.com/documentation/general/guides/authorization-guide/#4-requesting-a-refreshed-access-token-spotify-returns-a-new-access-token-to-your-app
+   */
+  async refreshAccessToken(): Promise<void> {
+    const params = new URLSearchParams()
+    params.append('grant_type', 'refresh_token')
+    params.append('refresh_token', this.token.refresh_token)
+    const encodedStr = Buffer.from(
+      `${credentials.client.id}:${credentials.client.secret}`,
+      'utf8',
+    ).toString('base64')
+    const newToken = (
+      await this.client.post('/token', params, {
+        baseURL: 'https://accounts.spotify.com/api',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${encodedStr}`,
+        },
+      })
+    ).data
+    this.token.access_token = newToken.access_token
+    this.client.defaults.headers[
+      'Authorization'
+    ] = `Bearer ${this.token.access_token}`
+    await db
+      .collection('spotifyAccessTokens')
+      .doc(`spotify:${this.userId}`)
+      .set(this.token)
   }
 
   /**
