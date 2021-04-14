@@ -21,7 +21,7 @@ export const db = admin.firestore()
 // Controllers
 import * as spotifyAuthController from './controllers/spotifyAuth'
 import * as spotifyPlaylistController from './controllers/spotifyPlaylists'
-import {SyncPlaylist,, SyncPlaylistMap SyncPlaylistMap} from './models/syncPlaylist'
+import { SyncPlaylist } from './models/syncPlaylist'
 import { SpotifyClient } from './utils/spotifyClient'
 import { Playlist } from './types/spotify'
 
@@ -82,24 +82,34 @@ const onSyncPlaylists = async () => {
   const collectionMap = await SyncPlaylist.getCollection()
   // For each syncedPlaylist collection:
   for (const [userId, syncPlaylistMap] of Object.entries(collectionMap)) {
+    console.log(syncPlaylistMap)
     //  For each key:value in collection:
     const spotifyClient = await new SpotifyClient(userId)
-    for (const syncPlaylistObj of Object.values(syncPlaylistMap)) {
+    for (const { sourcePlaylists } of Object.values(syncPlaylistMap)) {
       //    fetch current sourceePlaylists.snapshot_id from spotify is
       const currentSourcePlaylists: Playlist[] = await Promise.all(
-        syncPlaylistObj.sourcePlaylists.map((playlist) =>
+        sourcePlaylists.map((playlist) =>
           spotifyClient.getPlaylist(
             playlist.id,
             'id,uri,snapshot_id,tracks.items(track(uri))',
           ),
         ),
       )
-      console.log(syncPlaylistObj.sourcePlaylists.flatMap((playlist) => playlist.snapshot_id))
-      console.log(currentSourcePlaylists.flatMap((playlist) => playlist.snapshot_id))
-      //
-      // const tracks = sourcePlaylists
-      //   .flatMap((currentVal) => currentVal.tracks.items)
-      //   .map((track) => track.track.uri)
+
+      //  Find source playlists that have been updated (their snapshot id's will not be the same)
+      const changedSourcePlaylists = currentSourcePlaylists.filter(
+        (changedPlaylist) =>
+          !sourcePlaylists
+            .flatMap((playlist) => playlist.snapshot_id)
+            .includes(changedPlaylist.snapshot_id),
+      )
+      if (changedSourcePlaylists.length) {
+        const tracks = changedSourcePlaylists
+          .flatMap((currentVal) => currentVal.tracks.items)
+          .map((track) => track.track.uri)
+        console.log(tracks)
+      } else console.log('no changes to playlists')
+
       //    for each different playlist snapshot id:
       //      fetch songs for playlist that have a 'addedDate' greater than collection.lasySybnced date
       //      add those songs to destination playlist
