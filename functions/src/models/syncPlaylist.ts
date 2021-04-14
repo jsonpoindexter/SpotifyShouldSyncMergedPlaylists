@@ -2,8 +2,15 @@ import { db } from '../index'
 import { firestore } from 'firebase-admin/lib/firestore'
 import WriteResult = firestore.WriteResult
 
-type SyncPlaylistMap = {
-  [key: string]: SyncPlaylistObj
+/**
+ * Useful for when we want to export our whole collection
+ */
+export type SyncPlaylistCollectionMap = {
+  [userId: string]: SyncPlaylistMap
+}
+
+export type SyncPlaylistMap = {
+  [destinationPlaylistId: string]: SyncPlaylistObj
 }
 
 interface SyncPlaylistObj {
@@ -23,6 +30,21 @@ interface SyncPlaylistObj {
 class _SyncPlaylist {
   private COLLECTION_PATH = 'syncPlaylists'
   private collectionRef = db.collection(this.COLLECTION_PATH)
+
+  getCollection = async () => {
+    let results: SyncPlaylistCollectionMap = {}
+    const ref = await this.collectionRef.get()
+    ref.docs.forEach((doc) => {
+      results = { ...results, [`${doc.id}`]: doc.data() as SyncPlaylistMap }
+    })
+    return results
+  }
+
+  /**
+   *  Add a new (or overwrite if exists) SyncPlaylistObj to a document
+   * @param userId
+   * @param payload
+   */
   set = async (
     userId: string,
     payload: SyncPlaylistObj,

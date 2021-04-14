@@ -21,6 +21,9 @@ export const db = admin.firestore()
 // Controllers
 import * as spotifyAuthController from './controllers/spotifyAuth'
 import * as spotifyPlaylistController from './controllers/spotifyPlaylists'
+import {SyncPlaylist,, SyncPlaylistMap SyncPlaylistMap} from './models/syncPlaylist'
+import { SpotifyClient } from './utils/spotifyClient'
+import { Playlist } from './types/spotify'
 
 export const BASE_URL =
   process.env.FUNCTIONS_EMULATOR === 'true'
@@ -69,3 +72,38 @@ app.post(
 )
 
 exports.app = functions.https.onRequest(app)
+
+// exports.syncFunction = functions.pubsub
+//   .schedule('every day a 00:00')
+//   .onRun((context) => console.log('This will run!'))
+//
+const onSyncPlaylists = async () => {
+  // Get all syncPlaylists from firestore
+  const collectionMap = await SyncPlaylist.getCollection()
+  // For each syncedPlaylist collection:
+  for (const [userId, syncPlaylistMap] of Object.entries(collectionMap)) {
+    //  For each key:value in collection:
+    const spotifyClient = await new SpotifyClient(userId)
+    for (const syncPlaylistObj of Object.values(syncPlaylistMap)) {
+      //    fetch current sourceePlaylists.snapshot_id from spotify is
+      const currentSourcePlaylists: Playlist[] = await Promise.all(
+        syncPlaylistObj.sourcePlaylists.map((playlist) =>
+          spotifyClient.getPlaylist(
+            playlist.id,
+            'id,uri,snapshot_id,tracks.items(track(uri))',
+          ),
+        ),
+      )
+      console.log(syncPlaylistObj.sourcePlaylists.flatMap((playlist) => playlist.snapshot_id))
+      console.log(currentSourcePlaylists.flatMap((playlist) => playlist.snapshot_id))
+      //
+      // const tracks = sourcePlaylists
+      //   .flatMap((currentVal) => currentVal.tracks.items)
+      //   .map((track) => track.track.uri)
+      //    for each different playlist snapshot id:
+      //      fetch songs for playlist that have a 'addedDate' greater than collection.lasySybnced date
+      //      add those songs to destination playlist
+    }
+  }
+}
+;(async () => onSyncPlaylists())()
