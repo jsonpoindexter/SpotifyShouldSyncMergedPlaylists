@@ -1,5 +1,5 @@
-import { db } from '../index'
 import { firestore } from 'firebase-admin/lib/firestore'
+import db from '../services/db'
 import WriteResult = firestore.WriteResult
 import Timestamp = firestore.Timestamp
 
@@ -14,17 +14,14 @@ export type SyncPlaylistMap = {
   [destinationPlaylistId: string]: SyncPlaylistObj
 }
 
+interface PlaylistObj {
+  id: string
+  uri: string
+  snapshot_id: string
+}
 interface SyncPlaylistObj {
-  destinationPlaylist: {
-    id: string
-    uri: string
-    snapshot_id: string
-  }
-  sourcePlaylists: {
-    id: string
-    uri: string
-    snapshot_id: string
-  }[]
+  destinationPlaylist: PlaylistObj
+  sourcePlaylists: PlaylistObj[]
   lastSynced: Timestamp
 }
 
@@ -77,6 +74,46 @@ class _SyncPlaylist {
       return data[playlistId]
     }
     throw Error(`docRef ${docRef.ref.path} does not exist`)
+  }
+
+  /**
+   * Update a snapshot id of user's playlistObj sourcePlaylist or destinationPlaylist
+   * If its a sourceplaylist we need to find the specific playlist
+   * @param {string} userId
+   * @param {string} destinationPlaylistId
+   * @param {string} snapshotId
+   * @param {string} sourcePlaylistId
+   * @returns {Promise<void>}
+   */
+  updateSnapshotId = async (
+    userId: string,
+    destinationPlaylistId: string,
+    snapshotId: string,
+    sourcePlaylistId?: string,
+  ) => {
+    const docRef = this.collectionRef.doc(userId)
+    const docSnapshot = await docRef.get()
+    if (docSnapshot.exists) {
+      const syncPlaylistObj = (docSnapshot.data() as SyncPlaylistMap)[
+        destinationPlaylistId
+      ]
+      if (sourcePlaylistId) {
+        const sourcePlaylist = syncPlaylistObj.sourcePlaylists.find(
+          (sourcePlaylist) => sourcePlaylist.id === sourcePlaylistId,
+        )
+        if (!sourcePlaylist)
+          throw Error(
+            `sourcePlaylistId ${sourcePlaylistId} does not exist on ${destinationPlaylistId}`,
+          )
+        sourcePlaylist.snapshot_id = snapshotId
+      } else {
+        syncPlaylistObj.destinationPlaylist.snapshot_id = snapshotId
+      }
+      syncPlaylistObj.lastSynced = Timestamp.now()
+      await docRef.update(destinationPlaylistId, syncPlaylistObj)
+    } else {
+      throw Error(`docSnapshot ${docSnapshot.ref.path} does not exist`)
+    }
   }
 }
 

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express'
-import { firestore } from 'firebase-admin/lib/firestore'
-import { Playlist } from '../types/spotify'
 import { validationResult } from 'express-validator'
-import { SpotifyClient } from '../utils/spotifyClient'
+import { firestore } from 'firebase-admin/lib/firestore'
 import { SyncPlaylist } from '../models/syncPlaylist'
+import { Playlist } from '../types/spotify'
+import { SpotifyClient } from '../utils/spotifyClient'
 import Timestamp = firestore.Timestamp
 
 export const getAllPlaylists = async (

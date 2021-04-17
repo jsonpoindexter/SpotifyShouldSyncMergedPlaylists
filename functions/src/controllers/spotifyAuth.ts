@@ -1,12 +1,13 @@
 import axios from 'axios'
-import { Profile } from '../types/spotify'
-import { Request, Response } from 'express'
-import { BASE_URL, db } from '../index'
-import * as oauth2lib from 'simple-oauth2'
-import * as functions from 'firebase-functions'
 import * as crypto from 'crypto'
+import { Request, Response } from 'express'
 import * as admin from 'firebase-admin'
+import * as functions from 'firebase-functions'
+import * as oauth2lib from 'simple-oauth2'
 import { Token } from 'simple-oauth2'
+import { BASE_URL } from '../index'
+import db from '../services/db'
+import { Profile } from '../types/spotify'
 
 export const credentials = {
   client: {
@@ -107,7 +108,7 @@ async function createFirebaseAccount(
     .collection('spotifyAccessTokens')
     .doc(uid)
     .set(accessToken)
-    .catch((error) => {
+    .catch((error: Error) => {
       console.log('err')
       throw error
     })

@@ -3,8 +3,8 @@
 // `Authorization: Bearer <Firebase ID Token>`.
 // when decoded successfully, the ID Token content will be added as `req.user`.
 import { NextFunction, Request, Response } from 'express'
-import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
+import * as functions from 'firebase-functions'
 
 export const validateFirebaseIdToken = async (
   req: Request,

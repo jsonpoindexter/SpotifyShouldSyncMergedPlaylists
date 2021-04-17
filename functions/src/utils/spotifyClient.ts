@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
+import { credentials } from '../controllers/spotifyAuth'
+import db from '../services/db'
 import {
   PagingObject,
   Playlist,
@@ -6,8 +8,6 @@ import {
   Token,
   Track,
 } from '../types/spotify'
-import { db } from '../index'
-import { credentials } from '../controllers/spotifyAuth'
 
 const BASE_URL = 'https://api.spotify.com/v1'
 
@@ -223,7 +223,7 @@ export class SpotifyClient {
    */
   removeItemsFromPlaylist = async (
     playlistId: string,
-    tracks: { uri: string }[],
+    tracks: string[], // track ids
   ): Promise<{ snapshot_id: string }> =>
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -231,6 +231,10 @@ export class SpotifyClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      data: { tracks: tracks },
+      data: {
+        tracks: tracks.map((track) => ({
+          uri: track,
+        })),
+      },
     })
 }
