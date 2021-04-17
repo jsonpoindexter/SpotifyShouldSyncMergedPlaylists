@@ -217,4 +217,20 @@ export class SpotifyClient {
         params: { position },
       })
     ).data
+
+  /**
+   * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-tracks-playlist
+   */
+  removeItemsFromPlaylist = async (
+    playlistId: string,
+    tracks: { uri: string }[],
+  ): Promise<{ snapshot_id: string }> =>
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    await this.client.delete(`/playlists/${playlistId}/tracks`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: { tracks: tracks },
+    })
 }

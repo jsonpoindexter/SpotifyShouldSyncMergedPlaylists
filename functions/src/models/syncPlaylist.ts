@@ -1,6 +1,7 @@
 import { db } from '../index'
 import { firestore } from 'firebase-admin/lib/firestore'
 import WriteResult = firestore.WriteResult
+import Timestamp = firestore.Timestamp
 
 /**
  * Useful for when we want to export our whole collection
@@ -24,7 +25,7 @@ interface SyncPlaylistObj {
     uri: string
     snapshot_id: string
   }[]
-  lastSynced: Date
+  lastSynced: Timestamp
 }
 
 class _SyncPlaylist {

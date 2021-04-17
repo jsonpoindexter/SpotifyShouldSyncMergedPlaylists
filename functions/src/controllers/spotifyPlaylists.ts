@@ -1,8 +1,10 @@
 import { Request, Response } from 'express'
+import { firestore } from 'firebase-admin/lib/firestore'
 import { Playlist } from '../types/spotify'
 import { validationResult } from 'express-validator'
 import { SpotifyClient } from '../utils/spotifyClient'
 import { SyncPlaylist } from '../models/syncPlaylist'
+import Timestamp = firestore.Timestamp
 
 export const getAllPlaylists = async (
   req: Request,
@@ -59,6 +61,7 @@ export const postCombinePlaylists = async (
   const tracks = sourcePlaylists
     .flatMap((currentVal) => currentVal.tracks.items)
     .map((track) => track.track.uri)
+    .filter((track, index, self) => self.indexOf(track) === index) // Unique
 
   const destinationPlaylist = await spotifyClient.createPlaylist(
     name,
@@ -84,7 +87,7 @@ export const postCombinePlaylists = async (
       uri: destinationPlaylist.uri,
       snapshot_id: destinationPlaylist.snapshot_id,
     },
-    lastSynced: new Date(),
+    lastSynced: Timestamp.now(),
   })
 
   return res.status(200).send(destinationPlaylist)
