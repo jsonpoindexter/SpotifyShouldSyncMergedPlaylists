@@ -10,10 +10,11 @@ import * as spotifyPlaylistController from './controllers/spotifyPlaylists'
 import { validateFirebaseIdToken } from './utils/firebase'
 import { onSyncPlaylists } from './utils/sync'
 
-export const BASE_URL =
-  process.env.FUNCTIONS_EMULATOR === 'true'
-    ? 'http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app'
-    : 'https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app'
+export const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true'
+
+export const BASE_URL = isEmulator
+  ? 'http://localhost:5001/spotify-should-sync-merged-pla/us-central1/app'
+  : 'https://us-central1-spotify-should-sync-merged-pla.cloudfunctions.net/app'
 
 console.log(`BASE_URL: ${BASE_URL}`)
 
@@ -58,6 +59,12 @@ app.post(
 
 exports.app = functions.https.onRequest(app)
 
-exports.syncFunction = functions.pubsub
-  .schedule('0 * * * *') // Every hour on the hour
-  .onRun((context) => onSyncPlaylists())
+if (isEmulator) {
+  ;(async () => {
+    await onSyncPlaylists()
+  })()
+} else {
+  exports.syncFunction = functions.pubsub
+    .schedule('0 * * * *') // Every hour on the hour
+    .onRun((context) => onSyncPlaylists())
+}

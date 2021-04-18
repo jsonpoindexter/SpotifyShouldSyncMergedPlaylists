@@ -1,6 +1,7 @@
 import { firestore } from 'firebase-admin/lib/firestore'
 import { SyncPlaylist } from '../models/syncPlaylist'
 import { Playlist } from '../types/spotify'
+import logger from './logger'
 import { SpotifyClient } from './spotifyClient'
 import Timestamp = firestore.Timestamp
 
@@ -13,12 +14,22 @@ export const onSyncPlaylists = async (): Promise<void> => {
   const collectionMap = await SyncPlaylist.getCollection()
   // For each syncedPlaylist collection:
   for (const [userId, syncPlaylistMap] of Object.entries(collectionMap)) {
+    logger.debug(`Starting sync for ${userId}`)
     const spotifyClient = await new SpotifyClient(userId)
     for (const {
       sourcePlaylists,
       lastSynced,
       destinationPlaylist,
     } of Object.values(syncPlaylistMap)) {
+      logger.debug(`Fetching destination playlist ${destinationPlaylist.id}`)
+      // Fetch the destination playlist
+      const currentDestinationPlaylist = await spotifyClient.getPlaylist(
+        destinationPlaylist.id,
+        'id,uri,followers,snapshot_id,tracks.items(added_at,track(uri))',
+      )
+      logger.debug(currentDestinationPlaylist)
+      // If its been deleted then remove the firestore sync playlist entry
+
       // fetch current sourcePlaylists.snapshot_id from spotify is
       const currentSourcePlaylists: Playlist[] = await Promise.all(
         sourcePlaylists.map((playlist) =>
@@ -35,10 +46,6 @@ export const onSyncPlaylists = async (): Promise<void> => {
           !sourcePlaylists
             .flatMap((playlist) => playlist.snapshot_id)
             .includes(changedPlaylist.snapshot_id),
-      )
-      const currentDestinationPlaylist = await spotifyClient.getPlaylist(
-        destinationPlaylist.id,
-        'id,uri,snapshot_id,tracks.items(added_at,track(uri))',
       )
 
       // If there are no changed current sourcePlaylists return
