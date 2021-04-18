@@ -77,7 +77,7 @@ export const onSyncPlaylists = async (): Promise<void> => {
         logger.debug(
           `[${userId}:${destinationPlaylist.id}] No updates to ${sourcePlaylists.length} source playlist(s)`,
         )
-        return
+        continue
       }
 
       // Parse unique tracks from changed source playlists
