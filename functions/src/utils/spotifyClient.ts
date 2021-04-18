@@ -120,7 +120,7 @@ export class SpotifyClient {
    * @param limit
    */
   getSpotifyPlaylistsRecursive = async (
-    limit: number,
+    limit = 50,
     url = `${BASE_URL}/me/playlists`,
   ): Promise<Playlist[]> => {
     const playlistsResponse = await this.getPlaylists(url, limit)
@@ -237,4 +237,16 @@ export class SpotifyClient {
         })),
       },
     })
+
+  /**
+   * Check if a user has a specific playlist
+   * NOTE: a user's owned playlist can't be fully 'deleted'. It will be remove from the owners view but
+   * https://developer.spotify.com/documentation/general/guides/working-with-playlists/#following-and-unfollowing-a-playlist
+   * @param {string} playlistId
+   * @returns {Promise<boolean>}
+   */
+  doesUserHavePlaylist = async (playlistId: string): Promise<boolean> =>
+    (await this.getSpotifyPlaylistsRecursive()).some(
+      (playlist) => playlist.id === playlistId,
+    )
 }

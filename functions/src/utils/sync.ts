@@ -7,27 +7,51 @@ import Timestamp = firestore.Timestamp
 
 /**
  * Iterate through all user created sync playlists and syn source playlists into the destination playlist (one way)
+ * NOTE: currently, if a user deletes a track from the destination playlist the tracks will not be synced from the
+ *  source playlists again UNLESS the uses re-adds that song to the source playlist since we are filtering out tracks
+ *  that have a added_at time that is greater than the lastSync
+ *
+ *  NOTE: maybe we should limit how many track add/remove syncs we do per user each run? The current filter() method
+ *    for added_at would not work for this
  * @returns {Promise<void>}
  */
 export const onSyncPlaylists = async (): Promise<void> => {
   // Get all syncPlaylists mappings from firestore
   const collectionMap = await SyncPlaylist.getCollection()
+  logger.debug(`Starting sync for ${Object.keys(collectionMap).length} user(s)`)
   // For each syncedPlaylist collection:
   for (const [userId, syncPlaylistMap] of Object.entries(collectionMap)) {
-    logger.debug(`Starting sync for ${userId}`)
+    logger.debug(
+      `[${userId}] Syncing ${
+        Object.keys(syncPlaylistMap).length
+      } destination playlist(s) to ${
+        Object.values(syncPlaylistMap).flatMap(
+          (syncPlaylistObj) => syncPlaylistObj.sourcePlaylists,
+        ).length
+      }`,
+    )
     const spotifyClient = await new SpotifyClient(userId)
     for (const {
       sourcePlaylists,
       lastSynced,
       destinationPlaylist,
     } of Object.values(syncPlaylistMap)) {
-      logger.debug(`Fetching destination playlist ${destinationPlaylist.id}`)
+      logger.debug(
+        `[${userId}] Fetching destination playlist ${destinationPlaylist.id}`,
+      )
+      if (!(await spotifyClient.doesUserHavePlaylist(destinationPlaylist.id))) {
+        logger.debug(
+          `[${userId}] Playlist ${destinationPlaylist.id} no longer exists on user ${userId}. Removing from firebase...`,
+        )
+        await SyncPlaylist.deleteOne(userId, destinationPlaylist.id)
+        continue
+      }
+
       // Fetch the destination playlist
       const currentDestinationPlaylist = await spotifyClient.getPlaylist(
         destinationPlaylist.id,
-        'id,uri,followers,snapshot_id,tracks.items(added_at,track(uri))',
+        'id,uri,snapshot_id,tracks.items(added_at,track(uri))',
       )
-      logger.debug(currentDestinationPlaylist)
       // If its been deleted then remove the firestore sync playlist entry
 
       // fetch current sourcePlaylists.snapshot_id from spotify is
@@ -49,13 +73,18 @@ export const onSyncPlaylists = async (): Promise<void> => {
       )
 
       // If there are no changed current sourcePlaylists return
-      if (!changedSourcePlaylists.length) return
+      if (!changedSourcePlaylists.length) {
+        logger.debug(
+          `[${userId}:${destinationPlaylist.id}] No updates to ${sourcePlaylists.length} source playlist(s)`,
+        )
+        return
+      }
 
       // Parse unique tracks from changed source playlists
-      const sourceTracks = changedSourcePlaylists
+      const newlyAddedSourceTracks = changedSourcePlaylists
         .flatMap((currentVal) => currentVal.tracks.items)
         .map((track) => ({ uri: track.track.uri, added_at: track.added_at }))
-        .reduce<{ added_at: Date; uri: string }[]>( // Unique TODO:make sure this works
+        .reduce<{ added_at: Date; uri: string }[]>(
           (accumulator, current) =>
             accumulator.some((item) => item.uri === current.uri)
               ? accumulator
@@ -64,36 +93,48 @@ export const onSyncPlaylists = async (): Promise<void> => {
         )
 
       // Extract tracks to add to destination playlist (tracks that were added after the last sync date)
-      const addTrackIds = sourceTracks
+      const addTrackIds = newlyAddedSourceTracks
         .filter(
           (track) => Timestamp.fromDate(new Date(track.added_at)) > lastSynced,
         )
         .map((track) => track.uri)
-      try {
-        let snapshotId = ''
-        while (addTrackIds.length > 0) {
-          snapshotId = (
-            await spotifyClient.addItemsToPlaylist(
-              destinationPlaylist.id,
-              addTrackIds.splice(0, 100),
-            )
-          ).snapshot_id
-        }
-        if (snapshotId)
-          await SyncPlaylist.updateSnapshotId(
-            userId,
-            destinationPlaylist.id,
-            snapshotId,
-          )
-      } catch (error) {
-        console.log(
-          `Error adding tracks to playlist ${destinationPlaylist.id}`,
-          error,
+      if (addTrackIds.length) {
+        logger.debug(
+          `[${userId}] Adding ${addTrackIds.length} track(s) to ${destinationPlaylist.id}`,
         )
+        try {
+          let snapshotId = ''
+          while (addTrackIds.length > 0) {
+            snapshotId = (
+              await spotifyClient.addItemsToPlaylist(
+                destinationPlaylist.id,
+                addTrackIds.splice(0, 100),
+              )
+            ).snapshot_id
+          }
+          if (snapshotId)
+            await SyncPlaylist.updateSnapshotId(
+              userId,
+              destinationPlaylist.id,
+              snapshotId,
+            )
+        } catch (error) {
+          if (error.isAxiosError) {
+            logger.error(error)
+            logger.error(
+              `Error removing tracks from playlist: ${error.message}`,
+            )
+          } else {
+            logger.error(`Error removing tracks from playlist: ${error}`)
+          }
+        }
       }
 
       // Extract tracks to remove from destination playlist (tracks that are present in the destination playlist but not in the source playlists)
-      const sourceTrackIds = sourceTracks.map((track) => track.uri)
+      const sourceTrackIds = currentSourcePlaylists
+        .flatMap((currentVal) => currentVal.tracks.items)
+        .map((track) => track.track.uri)
+
       const destinationTrackIds = currentDestinationPlaylist.tracks.items.map(
         (track) => track.track.uri,
       )
@@ -103,6 +144,9 @@ export const onSyncPlaylists = async (): Promise<void> => {
       )
 
       if (deleteTracks.length) {
+        logger.debug(
+          `[${userId}] Removing ${deleteTracks.length} track(s) from ${destinationPlaylist.id}`,
+        )
         try {
           let snapshotId = ''
           while (deleteTracks.length > 0) {
@@ -122,13 +166,16 @@ export const onSyncPlaylists = async (): Promise<void> => {
             )
         } catch (error) {
           if (error.isAxiosError) {
-            console.log('Error removing tracks from playlist', error.message)
-            console.log(error)
+            logger.error(error)
+            logger.error(
+              `Error removing tracks from playlist: ${error.message}`,
+            )
           } else {
-            console.log('Error removing tracks from playlist', error)
+            logger.error(`Error removing tracks from playlist: ${error}`)
           }
         }
       }
     }
   }
+  logger.debug('Completed sync')
 }

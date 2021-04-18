@@ -1,7 +1,9 @@
 import { firestore } from 'firebase-admin/lib/firestore'
 import db from '../services/db'
+import { isObjectEmpty } from '../utils/general'
 import WriteResult = firestore.WriteResult
 import Timestamp = firestore.Timestamp
+import DocumentSnapshot = firestore.DocumentSnapshot
 
 /**
  * Useful for when we want to export our whole collection
@@ -28,6 +30,14 @@ interface SyncPlaylistObj {
 class _SyncPlaylist {
   private COLLECTION_PATH = 'syncPlaylists'
   private collectionRef = db.collection(this.COLLECTION_PATH)
+
+  private getDocSnapshot = async (
+    userId: string,
+  ): Promise<DocumentSnapshot> => {
+    const docSnapshot = await this.collectionRef.doc(userId).get()
+    if (docSnapshot.exists) return docSnapshot
+    throw Error(`docSnapshot ${docSnapshot.ref.path} does not exist`)
+  }
 
   getCollection = async () => {
     let results: SyncPlaylistCollectionMap = {}
@@ -67,13 +77,28 @@ class _SyncPlaylist {
   getOne = async (
     userId: string,
     playlistId: string,
-  ): Promise<SyncPlaylistObj> => {
-    const docRef = await this.collectionRef.doc(userId).get()
-    if (docRef.exists) {
-      const data = docRef.data() as SyncPlaylistMap
-      return data[playlistId]
-    }
-    throw Error(`docRef ${docRef.ref.path} does not exist`)
+  ): Promise<SyncPlaylistObj> =>
+    ((await this.getDocSnapshot(userId)).data() as SyncPlaylistMap)[playlistId]
+
+  /**
+   * Delete a single entry / sync job from a user's playlist map, or delete the entire collection if the document is now empty
+   * @param {string} userId
+   * @param {string} playlistId
+   * @returns {Promise<FirebaseFirestore.WriteResult>}
+   */
+  deleteOne = async (
+    userId: string,
+    playlistId: string,
+  ): Promise<WriteResult> => {
+    const documentSnapshot = await this.getDocSnapshot(userId)
+    const syncPlaylistMap = documentSnapshot.data() as SyncPlaylistMap
+    // Remove the entire collection if the document is now empty
+    if (isObjectEmpty(syncPlaylistMap)) {
+      return await documentSnapshot.ref.delete()
+    } else
+      return await documentSnapshot.ref.update({
+        [`${playlistId}`]: firestore.FieldValue.delete(),
+      })
   }
 
   /**
@@ -91,29 +116,24 @@ class _SyncPlaylist {
     snapshotId: string,
     sourcePlaylistId?: string,
   ) => {
-    const docRef = this.collectionRef.doc(userId)
-    const docSnapshot = await docRef.get()
-    if (docSnapshot.exists) {
-      const syncPlaylistObj = (docSnapshot.data() as SyncPlaylistMap)[
-        destinationPlaylistId
-      ]
-      if (sourcePlaylistId) {
-        const sourcePlaylist = syncPlaylistObj.sourcePlaylists.find(
-          (sourcePlaylist) => sourcePlaylist.id === sourcePlaylistId,
+    const documentSnapshot = await this.getDocSnapshot(userId)
+    const syncPlaylistObj = (documentSnapshot.data() as SyncPlaylistMap)[
+      destinationPlaylistId
+    ]
+    if (sourcePlaylistId) {
+      const sourcePlaylist = syncPlaylistObj.sourcePlaylists.find(
+        (sourcePlaylist) => sourcePlaylist.id === sourcePlaylistId,
+      )
+      if (!sourcePlaylist)
+        throw Error(
+          `sourcePlaylistId ${sourcePlaylistId} does not exist on ${destinationPlaylistId}`,
         )
-        if (!sourcePlaylist)
-          throw Error(
-            `sourcePlaylistId ${sourcePlaylistId} does not exist on ${destinationPlaylistId}`,
-          )
-        sourcePlaylist.snapshot_id = snapshotId
-      } else {
-        syncPlaylistObj.destinationPlaylist.snapshot_id = snapshotId
-      }
-      syncPlaylistObj.lastSynced = Timestamp.now()
-      await docRef.update(destinationPlaylistId, syncPlaylistObj)
+      sourcePlaylist.snapshot_id = snapshotId
     } else {
-      throw Error(`docSnapshot ${docSnapshot.ref.path} does not exist`)
+      syncPlaylistObj.destinationPlaylist.snapshot_id = snapshotId
     }
+    syncPlaylistObj.lastSynced = Timestamp.now()
+    await documentSnapshot.ref.update(destinationPlaylistId, syncPlaylistObj)
   }
 }
 

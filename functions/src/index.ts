@@ -66,5 +66,5 @@ if (isEmulator) {
 } else {
   exports.syncFunction = functions.pubsub
     .schedule('0 * * * *') // Every hour on the hour
-    .onRun((context) => onSyncPlaylists())
+    .onRun(() => onSyncPlaylists())
 }
