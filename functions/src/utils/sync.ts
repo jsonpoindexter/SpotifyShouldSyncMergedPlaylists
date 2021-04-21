@@ -59,7 +59,7 @@ export const onSyncPlaylists = async (): Promise<void> => {
         sourcePlaylists.map((playlist) =>
           spotifyClient.getPlaylist(
             playlist.id,
-            'id,uri,snapshot_id,tracks.items(added_at,track(uri))',
+            'name,id,uri,snapshot_id,tracks.items(added_at,track(uri))',
           ),
         ),
       )
@@ -81,10 +81,26 @@ export const onSyncPlaylists = async (): Promise<void> => {
       }
 
       // Parse unique tracks from changed source playlists
-      const newlyAddedSourceTracks = changedSourcePlaylists
-        .flatMap((currentVal) => currentVal.tracks.items)
-        .map((track) => ({ uri: track.track.uri, added_at: track.added_at }))
-        .reduce<{ added_at: Date; uri: string }[]>(
+      const sourcePlaylistTracks = (
+        await Promise.all(
+          changedSourcePlaylists.map(
+            async (playlist) =>
+              await spotifyClient.getPlaylistItemsRecursive(
+                playlist.id,
+                100,
+                0,
+                'total,limit,offset,items(added_at,track(name,uri))',
+              ),
+          ),
+        )
+      )
+        .flat()
+        .map((track) => ({
+          uri: track.track.uri,
+          added_at: track.added_at,
+          name: track.track.name,
+        }))
+        .reduce<{ added_at: Date; uri: string; name: string }[]>(
           (accumulator, current) =>
             accumulator.some((item) => item.uri === current.uri)
               ? accumulator
@@ -93,15 +109,18 @@ export const onSyncPlaylists = async (): Promise<void> => {
         )
 
       // Extract tracks to add to destination playlist (tracks that were added after the last sync date)
-      const addTrackIds = newlyAddedSourceTracks
-        .filter(
-          (track) => Timestamp.fromDate(new Date(track.added_at)) > lastSynced,
-        )
-        .map((track) => track.uri)
+      const addTrackIds = sourcePlaylistTracks
+        .filter((track) => {
+          return Timestamp.fromDate(new Date(track.added_at)) > lastSynced
+        })
+        .map((track) => {
+          return track.uri
+        })
       if (addTrackIds.length) {
         logger.debug(
           `[${userId}] Adding ${addTrackIds.length} track(s) to ${destinationPlaylist.id}`,
         )
+
         try {
           let snapshotId = ''
           while (addTrackIds.length > 0) {

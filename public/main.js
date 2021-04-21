@@ -240,7 +240,10 @@ class Main {
         playlistItem.setAttribute("id", playlist.id);
         const playlistImg = document.createElement("img");
         playlistImg.classList.add("playlist-avatar");
-        playlistImg.src = playlist.images[0].url;
+        playlistImg.src =
+          playlist.images.length && playlist.images[0].url
+            ? playlist.images[0].url
+            : "";
         const playlistName = document.createElement("span");
         playlistName.setAttribute("class", "playlist-name");
         playlistName.innerHTML = `${playlist.name} (${playlist.tracks.total})`;

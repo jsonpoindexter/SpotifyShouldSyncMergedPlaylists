@@ -52,12 +52,17 @@ export const getCallback = async (
     console.log(`Profile: ${JSON.stringify(profile)}`)
     const userId = profile.id
     const name = profile.display_name
-    const photoUrl = profile.images[0].url
+    const photoUrl =
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      profile.images.length && profile.images[0].url
+        ? profile.images[0].url
+        : ''
     const firebaseToken = await createFirebaseAccount(
       userId,
       name,
-      photoUrl,
       accessToken.token,
+      photoUrl,
     )
     // Serve an HTML page that signs the user in and updates the user profile.
     res.send(signInFirebaseTemplate(firebaseToken))
@@ -99,8 +104,8 @@ export const getRedirect = (req: Request, res: Response): void => {
 async function createFirebaseAccount(
   userId: string,
   name: string,
-  photoUrl: string,
   accessToken: Token,
+  photoUrl?: string,
 ) {
   // The uid we'll assign to the user.
   const uid = `spotify:${userId}`
@@ -114,19 +119,20 @@ async function createFirebaseAccount(
     })
   // Create the custom token.
   // Create or update the user account.
+  const account: { displayName: string; photoUrl?: string } = {
+    displayName: name,
+  }
+  if (photoUrl) account['photoUrl'] = photoUrl
+
   const userCreationTask = admin
     .auth()
-    .updateUser(uid, {
-      displayName: name,
-      photoURL: photoUrl,
-    })
+    .updateUser(uid, account)
     .catch((error) => {
       // If user does not exists we create it.
       if (error.code === 'auth/user-not-found') {
         return admin.auth().createUser({
           uid: uid,
-          displayName: name,
-          photoURL: photoUrl,
+          ...account,
         })
       }
       throw error

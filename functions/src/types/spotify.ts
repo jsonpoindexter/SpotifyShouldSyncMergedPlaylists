@@ -72,6 +72,7 @@ export interface Track {
   track: {
     id: string
     uri: string
+    name: string
   }
 }
 
