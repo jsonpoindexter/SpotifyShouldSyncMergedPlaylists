@@ -58,8 +58,21 @@ export const postCombinePlaylists = async (
     ),
   )
 
-  const tracks = sourcePlaylists
-    .flatMap((currentVal) => currentVal.tracks.items)
+  // Parse unique tracks from changed source playlists
+  const tracks = (
+    await Promise.all(
+      sourcePlaylists.map(
+        async (playlist) =>
+          await spotifyClient.getPlaylistItemsRecursive(
+            playlist.id,
+            100,
+            0,
+            'total,limit,offset,items(added_at,track(name,uri))', // NOTE total,limit,offset are required for recursive
+          ),
+      ),
+    )
+  )
+    .flat()
     .map((track) => track.track.uri)
     .filter((track, index, self) => self.indexOf(track) === index) // Unique
 
