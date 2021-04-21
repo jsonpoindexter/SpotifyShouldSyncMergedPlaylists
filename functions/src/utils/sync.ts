@@ -1,6 +1,5 @@
 import { firestore } from 'firebase-admin/lib/firestore'
 import { SyncPlaylist } from '../models/syncPlaylist'
-import { Playlist } from '../types/spotify'
 import logger from './logger'
 import { SpotifyClient } from './spotifyClient'
 import Timestamp = firestore.Timestamp
@@ -46,16 +45,8 @@ export const onSyncPlaylists = async (): Promise<void> => {
         await SyncPlaylist.deleteOne(userId, destinationPlaylist.id)
         continue
       }
-
-      // Fetch the destination playlist
-      const currentDestinationPlaylist = await spotifyClient.getPlaylist(
-        destinationPlaylist.id,
-        'id,uri,snapshot_id,tracks.items(added_at,track(uri))',
-      )
-      // If its been deleted then remove the firestore sync playlist entry
-
       // fetch current sourcePlaylists.snapshot_id from spotify is
-      const currentSourcePlaylists: Playlist[] = await Promise.all(
+      const currentSourcePlaylists = await Promise.all(
         sourcePlaylists.map((playlist) =>
           spotifyClient.getPlaylist(
             playlist.id,
@@ -83,13 +74,13 @@ export const onSyncPlaylists = async (): Promise<void> => {
       // Parse unique tracks from changed source playlists
       const sourcePlaylistTracks = (
         await Promise.all(
-          changedSourcePlaylists.map(
+          sourcePlaylists.map(
             async (playlist) =>
               await spotifyClient.getPlaylistItemsRecursive(
                 playlist.id,
                 100,
                 0,
-                'total,limit,offset,items(added_at,track(name,uri))',
+                'total,limit,offset,items(added_at,track(name,uri))', // NOTE total,limit,offset are required for recursive
               ),
           ),
         )
@@ -150,13 +141,17 @@ export const onSyncPlaylists = async (): Promise<void> => {
       }
 
       // Extract tracks to remove from destination playlist (tracks that are present in the destination playlist but not in the source playlists)
-      const sourceTrackIds = currentSourcePlaylists
-        .flatMap((currentVal) => currentVal.tracks.items)
-        .map((track) => track.track.uri)
 
-      const destinationTrackIds = currentDestinationPlaylist.tracks.items.map(
-        (track) => track.track.uri,
-      )
+      const sourceTrackIds = sourcePlaylistTracks.map((track) => track.uri)
+      const destinationTrackIds = (
+        await spotifyClient.getPlaylistItemsRecursive(
+          destinationPlaylist.id,
+          100,
+          0,
+          'total,limit,offset,items(added_at,track(name,uri))',
+        )
+      ) // NOTE total,limit,offset are required for recursive
+        .map((track) => track.track.uri)
 
       const deleteTracks = destinationTrackIds.filter(
         (destinationTrackId) => !sourceTrackIds.includes(destinationTrackId),
@@ -166,6 +161,7 @@ export const onSyncPlaylists = async (): Promise<void> => {
         logger.debug(
           `[${userId}] Removing ${deleteTracks.length} track(s) from ${destinationPlaylist.id}`,
         )
+
         try {
           let snapshotId = ''
           while (deleteTracks.length > 0) {
